@@ -32,7 +32,7 @@ section .text
     extern printhb
     global _start
 
-; Scratch registers
+; Scratch registers (for the complete programm)
 ; R8 maximum Basic CPUID Information
 _start:
     xor   RAX,RAX            ; clear RAX
@@ -71,6 +71,7 @@ _start:
     mov   EAX,1              ; get the next node
     cpuid                    ; get cpu information 0x0 (Basic CPUID Information)
     mov   R9,RAX             ; save the model and family
+    mov   R10,RBX            ; save the additional information
     shr   EAX,8              ; get bit 8 (lsb of family) to bit 0
     and   EAX,0x0f           ; mask the bits of the family
     mov   [cpu_family],AL    ; save the family
