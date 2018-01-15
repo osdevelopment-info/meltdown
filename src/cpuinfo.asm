@@ -40,7 +40,7 @@ section .text
 ; R8 maximum Basic CPUID Information
 _start:
     xor   RAX,RAX            ; clear RAX
-    cpuid                    ; get cpu information 0x0 (Basic CPUID Information)
+    cpuid                    ; get cpu information 0x00 (Basic CPUID Information)
     mov   R8,RAX             ; save the maximal for Basic CPUID Information
     mov   [scpu_vend],EBX    ; copy vendor information to reserved string 
     mov   [scpu_vend+4],EDX
@@ -73,7 +73,7 @@ _start:
     jl    done_basic         ; if 1 is not supported we're done
 
     mov   EAX,1              ; get the next node
-    cpuid                    ; get cpu information 0x0 (Basic CPUID Information)
+    cpuid                    ; get cpu information 0x01 (Family/Model)
     mov   R9,RAX             ; save the model and family
     mov   R10,RBX            ; save the additional information
     mov   R12,RCX            ; save the features (part 2)
