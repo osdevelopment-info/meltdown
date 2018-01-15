@@ -19,6 +19,10 @@ section .data
     sstepping:      db "stepping: 0x"
     scpu_stepping:  db "xx",0xa
     slen_stepping:  equ $-sstepping
+    sfeatures:      db "features:"
+    slen_features:  equ $-sfeatures
+    sfeat_fpu:      db " fpu"
+    slen_feat_fpu   equ $-sfeat_fpu
     scr:            db 0xa
 
 section .text
@@ -72,6 +76,8 @@ _start:
     cpuid                    ; get cpu information 0x0 (Basic CPUID Information)
     mov   R9,RAX             ; save the model and family
     mov   R10,RBX            ; save the additional information
+    mov   R12,RCX            ; save the features (part 2)
+    mov   R13,RDX            ; save the features (part 1)
     shr   EAX,8              ; get bit 8 (lsb of family) to bit 0
     and   EAX,0x0f           ; mask the bits of the family
     mov   [cpu_family],AL    ; save the family
@@ -118,6 +124,25 @@ simple_model:
     mov   RDI,1              ; stdout
     mov   RSI,sstepping
     mov   RDX,slen_stepping
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeatures
+    mov   RDX,slen_features
+    syscall
+    bt    R13,0              ; test for fpu
+    jnc   no_fpu
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_fpu
+    mov   RDX,slen_feat_fpu
+    syscall
+no_fpu:
+
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
     syscall
 
 done_basic:
