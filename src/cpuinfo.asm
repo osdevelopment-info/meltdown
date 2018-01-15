@@ -11,11 +11,14 @@ section .data
     smax_cpuid:     db "Max Basic CPUID value: "
     slen_max_cpuid: equ $-smax_cpuid
     sfamily:        db "cpu family: 0x"
-    scpu_family     db "xxxx",0xa
-    slen_family     equ $-sfamily
+    scpu_family:    db "xxxx",0xa
+    slen_family:    equ $-sfamily
     smodel:         db "cpu model: 0x"
-    scpu_model      db "xxxx",0xa
-    slen_model      equ $-smodel
+    scpu_model:     db "xxxx",0xa
+    slen_model:     equ $-smodel
+    sstepping:      db "stepping: 0x"
+    scpu_stepping:  db "xx",0xa
+    slen_stepping:  equ $-sstepping
     scr:            db 0xa
 
 section .text
@@ -105,6 +108,15 @@ simple_model:
     mov   RDI,1              ; stdout
     mov   RSI,smodel
     mov   RDX,slen_model
+    syscall
+    mov   RAX,R9             ; restore stepping information
+    and   EAX,0x0f           ; mask the stepping information
+    mov   RDI,scpu_stepping
+    call  printhb
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sstepping
+    mov   RDX,slen_stepping
     syscall
 
 done_basic:
