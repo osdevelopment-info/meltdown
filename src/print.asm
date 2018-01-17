@@ -14,11 +14,12 @@ section .text
     global printhb
 
 ; Format the quad word in RAX decimal
+; - in
 ; RAX: value to format
 ; RDI: address for the formatted string
+; - out
+; RDI - points to the first byte after the number
 ; RDX: number of bytes written (out)
-; modified:
-; RDI - points to the first byte not written
 printqw:
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
@@ -57,11 +58,12 @@ reverse:
     ret
 
 ; Format the double word in EAX decimal
+; - in
 ; EAX: value to format
 ; RDI: address for the formatted string
+; - out
+; RDI - points to the first byte after the number
 ; RDX: number of bytes written (out)
-; modified:
-; RDI - points to the first byte not written
 printdw:
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
@@ -74,11 +76,12 @@ printdw:
     ret
 
 ; Format the word in AX decimal
+; - in
 ; AX: value to format
 ; RDI: address for the formatted string
+; - out
+; RDI - points to the first byte after the number
 ; RDX: number of bytes written (out)
-; modified:
-; RDI - points to the first byte not written
 printw:
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
@@ -91,11 +94,12 @@ printw:
     ret
 
 ; Format the byte in AL decimal
+; - in
 ; AL: value to format
 ; RDI: address for the formatted string
+; - out
+; RDI - points to the first byte after the number
 ; RDX: number of bytes written (out)
-; modified:
-; RDI - points to the first byte not written
 printb:
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
@@ -108,10 +112,11 @@ printb:
     ret
 
 ; Format the quad_word in RAX in hex
+; - in
 ; RAX: value to format
 ; RDI: address for the formatted string
-; modified:
-; RDI - points to the first byte not written
+; - out
+; RDI - points to the first byte after the number
 printhqw:
     push RAX          ; save RAX for the lower double word
     shr  RAX,32       ; get the higher double word
@@ -122,10 +127,11 @@ printhqw:
     ret
 
 ; Format the word in EAX in hex
+; - in
 ; EAX: value to format
 ; RDI: address for the formatted string
-; modified:
-; RDI - points to the first byte not written
+; - out
+; RDI - points to the first byte after the number
 printhdw:
     push RAX          ; save RAX for the lower word
     shr  EAX,16       ; get the higher word
@@ -136,10 +142,11 @@ printhdw:
     ret
 
 ; Format the word in AX in hex
+; - in
 ; AX: value to format
 ; RDI: address for the formatted string
-; modified:
-; RDI - points to the first byte not written
+; - out
+; RDI - points to the first byte after the number
 printhw:
     push RAX          ; save RAX for the lower byte
     shr  AX,8         ; get the higher byte
@@ -150,10 +157,11 @@ printhw:
     ret
 
 ; Format the byte in AL in hex
+; - in
 ; AL: value to format
 ; RDI: address for the formatted string
-; modified:
-; RDI - points to the first byte not written
+; - out
+; RDI - points to the first byte after the number
 printhb:
     push RAX          ; save RAX for the lower nibble
     shr  AL,4         ; get the higher nibble
@@ -164,10 +172,13 @@ printhb:
     ret
 
 ; Format the nibble in the lower half of AL in hex
+; - in
 ; AL: value to format
 ; RDI: address for the formatted string
-; modified:
-; RDI - points to the first byte not written
+; - out
+; RDI - points to the first byte after the number
+; - modified
+; AL
 printhn:
     and  AL,0xf       ; mask the lower nibble
     cmp  AL,0xa       ; compare AL with 0xa, lower values need another handling
