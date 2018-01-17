@@ -33,6 +33,8 @@ section .data
     slen_feat_tsc:  equ $-sfeat_tsc
     sfeat_msr:      db " msr"
     slen_feat_msr:  equ $-sfeat_msr
+    sfeat_pae:      db " pae"
+    slen_feat_pae:  equ $-sfeat_pae
     scr:            db 0xa
 
 section .text
@@ -204,4 +206,12 @@ no_tsc:
     mov   RDX,slen_feat_msr
     syscall
 no_msr:
+    bt    R13,6              ; test for pae
+    jnc   no_pae
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pae
+    mov   RDX,slen_feat_pae
+    syscall
+no_pae:
     ret
