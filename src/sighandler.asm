@@ -6,6 +6,8 @@ section .bss
     src:             resb 1024*1024
 
 section .rodata
+    sstart_copy:        db "Start copying data",0x0a
+    slen_start_copy:    equ $-sstart_copy
     snotregistered:     db "Cannot register signal handler",0x0a
     slen_notregistered: equ $-snotregistered
     ssignal_nr1:        db "Signal Nr (from function parameter): "
@@ -43,7 +45,7 @@ _start:
     mov   RSI,sigaction_act
     mov   RDX,sigaction_old
     mov   R10,8              ; I do not really understand this number.
-                             ; it looks like this are the number of bytes needed
+                             ; It looks like this are the number of bytes needed
                              ; to mask all signals (up to 64)
     syscall
 
@@ -51,6 +53,12 @@ _start:
     jne   failed_register
 
 init_copy:
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sstart_copy
+    mov   RDX,slen_start_copy
+    syscall
+
     cld
     mov   RCX,1
     shl   RCX,21             ; number of repeats: 2^21
@@ -61,8 +69,8 @@ copy:
     loop  copy
 
 normal_end:
-    xor   RDI,RDI            ; exit code
     mov   RAX,60             ; sys exit
+    xor   RDI,RDI            ; exit code
     syscall
 
 failed_register:
@@ -72,8 +80,8 @@ failed_register:
     mov   RDX,slen_notregistered
     syscall
 
-    mov   RDI,1              ; exit code
     mov   RAX,60             ; sys exit
+    mov   RDI,1              ; exit code
     syscall
 
 sa_restorer:
@@ -92,11 +100,10 @@ sighandler:
     syscall
     pop   RAX                ; signum
     mov   RDI,scratch
-    call  printhqw
+    call  printqw
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
     mov   RSI,scratch
-    mov   RDX,16
     syscall
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
@@ -148,6 +155,6 @@ sighandler:
     mov   RDX,slen_sigsegv
     syscall
 
-    mov   RDI,1              ; exit code
     mov   RAX,60             ; sys exit
+    mov   RDI,1              ; exit code
     syscall
