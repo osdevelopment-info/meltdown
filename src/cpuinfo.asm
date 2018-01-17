@@ -35,6 +35,8 @@ section .data
     slen_feat_msr:  equ $-sfeat_msr
     sfeat_pae:      db " pae"
     slen_feat_pae:  equ $-sfeat_pae
+    sfeat_mce:      db " mce"
+    slen_feat_mce:  equ $-sfeat_mce
     scr:            db 0xa
 
 section .text
@@ -214,4 +216,12 @@ no_msr:
     mov   RDX,slen_feat_pae
     syscall
 no_pae:
+    bt    R13,7              ; test for mce
+    jnc   no_mce
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_mce
+    mov   RDX,slen_feat_mce
+    syscall
+no_mce:
     ret
