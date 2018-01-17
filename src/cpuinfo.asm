@@ -22,9 +22,11 @@ section .data
     sfeatures:      db "features:"
     slen_features:  equ $-sfeatures
     sfeat_fpu:      db " fpu"
-    slen_feat_fpu   equ $-sfeat_fpu
+    slen_feat_fpu:  equ $-sfeat_fpu
     sfeat_vme:      db " vme"
-    slen_feat_vme   equ $-sfeat_vme
+    slen_feat_vme:  equ $-sfeat_vme
+    sfeat_de:       db " de"
+    slen_feat_de:   equ $-sfeat_de
     scr:            db 0xa
 
 section .text
@@ -164,4 +166,12 @@ no_fpu:
     mov   RDX,slen_feat_vme
     syscall
 no_vme:
+    bt    R13,2              ; test for de
+    jnc   no_de
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_de
+    mov   RDX,slen_feat_de
+    syscall
+no_de:
     ret
