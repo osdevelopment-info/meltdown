@@ -39,6 +39,8 @@ section .data
     slen_feat_mce:  equ $-sfeat_mce
     sfeat_cx8:      db " cx8"
     slen_feat_cx8:  equ $-sfeat_cx8
+    sfeat_apic:     db " apic"
+    slen_feat_apic:  equ $-sfeat_apic
     scr:            db 0xa
 
 section .text
@@ -234,4 +236,12 @@ no_mce:
     mov   RDX,slen_feat_cx8
     syscall
 no_cx8:
+    bt    R13,9              ; test for apic
+    jnc   no_apic
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_apic
+    mov   RDX,slen_feat_apic
+    syscall
+no_apic:
     ret
