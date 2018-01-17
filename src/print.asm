@@ -21,6 +21,8 @@ section .text
 ; RDI - points to the first byte after the number
 ; RDX: number of bytes written (out)
 printqw:
+    pushfq
+    cld
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
     push RDI         ; save RDI for later usage
@@ -28,7 +30,7 @@ printqw:
     mov  RCX,10      ; move the divisor to RCX
 next:
     xor  RDX,RDX     ; clear RDX
-    test RAX,RAX     ; test if we are done
+    cmp  RAX,0x00    ; test if we are done
     je   done
     div  RCX
     push RAX         ; save RAX temporarily
@@ -46,6 +48,7 @@ end_printqw:
     sub  RCX,scratch ; calculate the number of characters written
     mov  RDX,RCX
     mov  RSI,RDI
+    dec  RSI
     pop  RDI         ; get the address for output back again
 reverse:
     mov  AL,[RSI]    ; move one byte from the source to the destination
@@ -55,6 +58,7 @@ reverse:
     loop reverse
     pop  RAX         ; restore RAX
     pop  RCX         ; restore RCX
+    popfq
     ret
 
 ; Format the double word in EAX decimal
@@ -180,6 +184,7 @@ printhb:
 ; - modified
 ; AL
 printhn:
+    pushfq
     and  AL,0xf       ; mask the lower nibble
     cmp  AL,0xa       ; compare AL with 0xa, lower values need another handling
     jge  print_af     ; than 0xa or higher values
@@ -188,5 +193,7 @@ printhn:
 print_af:
     add  AL,0x57      ; add 0x57 to get the ASCII character for the number a-f
 store:
+    cld
     stosb             ; store the character in the target
+    popfq
     ret
