@@ -27,6 +27,8 @@ section .data
     slen_feat_vme:  equ $-sfeat_vme
     sfeat_de:       db " de"
     slen_feat_de:   equ $-sfeat_de
+    sfeat_pse:      db " pse"
+    slen_feat_pse:  equ $-sfeat_pse
     scr:            db 0xa
 
 section .text
@@ -174,4 +176,12 @@ no_vme:
     mov   RDX,slen_feat_de
     syscall
 no_de:
+    bt    R13,3              ; test for pse
+    jnc   no_pse
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pse
+    mov   RDX,slen_feat_pse
+    syscall
+no_pse:
     ret
