@@ -23,6 +23,8 @@ section .data
     slen_features:  equ $-sfeatures
     sfeat_fpu:      db " fpu"
     slen_feat_fpu   equ $-sfeat_fpu
+    sfeat_vme:      db " vme"
+    slen_feat_vme   equ $-sfeat_vme
     scr:            db 0xa
 
 section .text
@@ -130,14 +132,8 @@ simple_model:
     mov   RSI,sfeatures
     mov   RDX,slen_features
     syscall
-    bt    R13,0              ; test for fpu
-    jnc   no_fpu
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,sfeat_fpu
-    mov   RDX,slen_feat_fpu
-    syscall
-no_fpu:
+
+    call  handle_features1
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
@@ -150,3 +146,22 @@ done_basic:
     xor   RDI,RDI            ; exit code
     mov   RAX,60             ; sys exit
     syscall
+
+handle_features1:
+    bt    R13,0              ; test for fpu
+    jnc   no_fpu
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_fpu
+    mov   RDX,slen_feat_fpu
+    syscall
+no_fpu:
+    bt    R13,1              ; test for vme
+    jnc   no_vme
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_vme
+    mov   RDX,slen_feat_vme
+    syscall
+no_vme:
+    ret
