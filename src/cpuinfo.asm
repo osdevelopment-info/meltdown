@@ -47,6 +47,8 @@ section .data
     slen_feat_mtrr: equ $-sfeat_mtrr
     sfeat_pge:      db " pge"
     slen_feat_pge:  equ $-sfeat_pge
+    sfeat_mca:      db " mca"
+    slen_feat_mca:  equ $-sfeat_mca
     scr:            db 0xa
 
 section .text
@@ -274,4 +276,12 @@ no_mtrr:
     mov   RDX,slen_feat_pge
     syscall
 no_pge:
+    bt    R13,14             ; test for mca
+    jnc   no_mca
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_mca
+    mov   RDX,slen_feat_mca
+    syscall
+no_mca:
     ret
