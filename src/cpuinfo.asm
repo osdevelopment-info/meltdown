@@ -22,7 +22,25 @@ section .data
     sfeatures:      db "features:"
     slen_features:  equ $-sfeatures
     sfeat_fpu:      db " fpu"
-    slen_feat_fpu   equ $-sfeat_fpu
+    slen_feat_fpu:  equ $-sfeat_fpu
+    sfeat_vme:      db " vme"
+    slen_feat_vme:  equ $-sfeat_vme
+    sfeat_de:       db " de"
+    slen_feat_de:   equ $-sfeat_de
+    sfeat_pse:      db " pse"
+    slen_feat_pse:  equ $-sfeat_pse
+    sfeat_tsc:      db " tsc"
+    slen_feat_tsc:  equ $-sfeat_tsc
+    sfeat_msr:      db " msr"
+    slen_feat_msr:  equ $-sfeat_msr
+    sfeat_pae:      db " pae"
+    slen_feat_pae:  equ $-sfeat_pae
+    sfeat_mce:      db " mce"
+    slen_feat_mce:  equ $-sfeat_mce
+    sfeat_cx8:      db " cx8"
+    slen_feat_cx8:  equ $-sfeat_cx8
+    sfeat_apic:     db " apic"
+    slen_feat_apic:  equ $-sfeat_apic
     scr:            db 0xa
 
 section .text
@@ -130,14 +148,8 @@ simple_model:
     mov   RSI,sfeatures
     mov   RDX,slen_features
     syscall
-    bt    R13,0              ; test for fpu
-    jnc   no_fpu
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,sfeat_fpu
-    mov   RDX,slen_feat_fpu
-    syscall
-no_fpu:
+
+    call  handle_features1
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
@@ -150,3 +162,86 @@ done_basic:
     xor   RDI,RDI            ; exit code
     mov   RAX,60             ; sys exit
     syscall
+
+handle_features1:
+    bt    R13,0              ; test for fpu
+    jnc   no_fpu
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_fpu
+    mov   RDX,slen_feat_fpu
+    syscall
+no_fpu:
+    bt    R13,1              ; test for vme
+    jnc   no_vme
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_vme
+    mov   RDX,slen_feat_vme
+    syscall
+no_vme:
+    bt    R13,2              ; test for de
+    jnc   no_de
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_de
+    mov   RDX,slen_feat_de
+    syscall
+no_de:
+    bt    R13,3              ; test for pse
+    jnc   no_pse
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pse
+    mov   RDX,slen_feat_pse
+    syscall
+no_pse:
+    bt    R13,4              ; test for tsc
+    jnc   no_tsc
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_tsc
+    mov   RDX,slen_feat_tsc
+    syscall
+no_tsc:
+    bt    R13,5              ; test for msr
+    jnc   no_msr
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_msr
+    mov   RDX,slen_feat_msr
+    syscall
+no_msr:
+    bt    R13,6              ; test for pae
+    jnc   no_pae
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pae
+    mov   RDX,slen_feat_pae
+    syscall
+no_pae:
+    bt    R13,7              ; test for mce
+    jnc   no_mce
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_mce
+    mov   RDX,slen_feat_mce
+    syscall
+no_mce:
+    bt    R13,8              ; test for cx8
+    jnc   no_cx8
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_cx8
+    mov   RDX,slen_feat_cx8
+    syscall
+no_cx8:
+    bt    R13,9              ; test for apic
+    jnc   no_apic
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_apic
+    mov   RDX,slen_feat_apic
+    syscall
+no_apic:
+    ret
