@@ -12,9 +12,15 @@ section .rodata
     slen_notregistered: equ $-snotregistered
     ssignal_nr1:        db "Signal Nr (from function parameter): "
     slen_signal_nr1:    equ $-ssignal_nr1
-    ssiginfo:           db "Signal Info (address): "
+    ssiginfo:           db "Signal Info (address): 0x"
     slen_siginfo:       equ $-ssiginfo
-    ssigcontext:        db "Signal Context (address): "
+    ssignal_nr2:        db "Signal Nr (from siginfo): "
+    slen_signal_nr2:    equ $-ssignal_nr2
+    serror_nr:          db "Error Nr (from siginfo): "
+    slen_error_nr:      equ $-serror_nr
+    scode:              db "Code (from siginfo): "
+    slen_code:          equ $-scode
+    ssigcontext:        db "Signal Context (address): 0x"
     slen_sigcontext:    equ $-ssigcontext
     ssigsegv:           db "Catched SIGSEGV",0x0a
     slen_sigsegv:       equ $-ssigsegv
@@ -89,16 +95,21 @@ sa_restorer:
     syscall
 
 sighandler:
-    push  RDX                ; sigcontext
-    push  RSI                ; siginfo
-    push  RDI                ; signum
+    push  RAX
+    push  RDX
+    push  R15
+    push  R14
+    push  R13
+    mov   R15,RDX            ; sigcontext
+    mov   R14,RSI            ; siginfo
+    mov   R13,RDI            ; signum
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
     mov   RSI,ssignal_nr1
     mov   RDX,slen_signal_nr1
     syscall
-    pop   RAX                ; signum
+    mov   RAX,R13            ; signum
     mov   RDI,scratch
     call  printqw
     mov   RAX,1              ; sys write
@@ -116,7 +127,7 @@ sighandler:
     mov   RSI,ssiginfo
     mov   RDX,slen_siginfo
     syscall
-    pop   RAX                ; siginfo
+    mov   RAX,R14            ; siginfo
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
@@ -129,13 +140,67 @@ sighandler:
     mov   RSI,scr
     mov   RDX,1
     syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssignal_nr2
+    mov   RDX,slen_signal_nr2
+    syscall
+    mov   RSI,R14            ; siginfo
+    mov   RAX,[RSI]          ; siginfo.si_signo
+    mov   RDI,scratch
+    call  printqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,serror_nr
+    mov   RDX,slen_error_nr
+    syscall
+    mov   RSI,R14            ; siginfo
+    mov   RAX,[RSI+4]        ; siginfo.si_errno
+    mov   RDI,scratch
+    call  printqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scode
+    mov   RDX,slen_code
+    syscall
+    mov   RSI,R14            ; siginfo
+    mov   RAX,[RSI+8]        ; siginfo.si_code
+    mov   RDI,scratch
+    call  printqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
     mov   RSI,ssigcontext
     mov   RDX,slen_sigcontext
     syscall
-    pop   RAX                ; sigcontext
+    mov   RAX,R15            ; sigcontext
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
@@ -154,6 +219,12 @@ sighandler:
     mov   RSI,ssigsegv
     mov   RDX,slen_sigsegv
     syscall
+
+    pop   R13
+    pop   R14
+    pop   R15
+    pop   RDX
+    pop   RAX
 
     mov   RAX,60             ; sys exit
     mov   RDI,1              ; exit code
