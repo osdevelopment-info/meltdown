@@ -78,7 +78,7 @@ section .rodata
     slen_ucontext:      equ $-sucontext
     suc_flags:          db "uc_flags (from ucontext): 0x"
     slen_uc_flags:      equ $-suc_flags
-    ssigcontext:        db "Signal Context (from uContext): 0x"
+    ssigcontext:        db "ucontext.sigcontext.rip: 0x"
     slen_sigcontext:    equ $-ssigcontext
     ssigsegv:           db "Catched SIGSEGV",0x0a
     slen_sigsegv:       equ $-ssigsegv
