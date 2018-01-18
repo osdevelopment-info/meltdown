@@ -45,6 +45,8 @@ section .data
     slen_feat_sep:  equ $-sfeat_sep
     sfeat_mtrr:     db " mtrr"
     slen_feat_mtrr: equ $-sfeat_mtrr
+    sfeat_pge:      db " pge"
+    slen_feat_pge:  equ $-sfeat_pge
     scr:            db 0xa
 
 section .text
@@ -264,4 +266,12 @@ no_sep:
     mov   RDX,slen_feat_mtrr
     syscall
 no_mtrr:
+    bt    R13,13             ; test for pge
+    jnc   no_pge
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pge
+    mov   RDX,slen_feat_pge
+    syscall
+no_pge:
     ret
