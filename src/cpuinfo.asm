@@ -43,6 +43,8 @@ section .data
     slen_feat_apic: equ $-sfeat_apic
     sfeat_sep:      db " sep"
     slen_feat_sep:  equ $-sfeat_sep
+    sfeat_mtrr:     db " mtrr"
+    slen_feat_mtrr: equ $-sfeat_mtrr
     scr:            db 0xa
 
 section .text
@@ -254,4 +256,12 @@ no_apic:
     mov   RDX,slen_feat_sep
     syscall
 no_sep:
+    bt    R13,12             ; test for mtrr
+    jnc   no_mtrr
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_mtrr
+    mov   RDX,slen_feat_mtrr
+    syscall
+no_mtrr:
     ret
