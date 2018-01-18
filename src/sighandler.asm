@@ -26,8 +26,8 @@ section .rodata
     slen_srcaddr:       equ $-ssrcaddr
     sinsaddr:           db "Address (copy instruction): 0x"
     slen_insaddr:       equ $-sinsaddr
-    ssigcontext:        db "Signal Context (address): 0x"
-    slen_sigcontext:    equ $-ssigcontext
+    sucontext:          db "uContext (address): 0x"
+    slen_ucontext:      equ $-sucontext
     suc_flags:          db "uc_flags (from ucontext): 0x"
     slen_uc_flags:      equ $-suc_flags
     ssigsegv:           db "Catched SIGSEGV",0x0a
@@ -259,10 +259,10 @@ sighandler:
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
-    mov   RSI,ssigcontext
-    mov   RDX,slen_sigcontext
+    mov   RSI,sucontext
+    mov   RDX,slen_ucontext
     syscall
-    mov   RAX,R15            ; sigcontext
+    mov   RAX,R15            ; ucontext
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
@@ -280,8 +280,8 @@ sighandler:
     mov   RSI,suc_flags
     mov   RDX,slen_uc_flags
     syscall
-    mov   RSI,R15            ; sigcontext
-    mov   RAX,[RSI]          ; sigcontext.uc_flags
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI]          ; ucontext.uc_flags
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
