@@ -49,6 +49,8 @@ section .data
     slen_feat_pge:  equ $-sfeat_pge
     sfeat_mca:      db " mca"
     slen_feat_mca:  equ $-sfeat_mca
+    sfeat_cmov:     db " cmov"
+    slen_feat_cmov: equ $-sfeat_cmov
     scr:            db 0xa
 
 section .text
@@ -284,4 +286,12 @@ no_pge:
     mov   RDX,slen_feat_mca
     syscall
 no_mca:
+    bt    R13,15             ; test for cmov
+    jnc   no_cmov
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_cmov
+    mov   RDX,slen_feat_cmov
+    syscall
+no_cmov:
     ret
