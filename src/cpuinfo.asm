@@ -40,7 +40,9 @@ section .data
     sfeat_cx8:      db " cx8"
     slen_feat_cx8:  equ $-sfeat_cx8
     sfeat_apic:     db " apic"
-    slen_feat_apic:  equ $-sfeat_apic
+    slen_feat_apic: equ $-sfeat_apic
+    sfeat_sep:      db " sep"
+    slen_feat_sep:  equ $-sfeat_sep
     scr:            db 0xa
 
 section .text
@@ -244,4 +246,12 @@ no_cx8:
     mov   RDX,slen_feat_apic
     syscall
 no_apic:
+    bt    R13,11             ; test for sep
+    jnc   no_sep
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_sep
+    mov   RDX,slen_feat_sep
+    syscall
+no_sep:
     ret
