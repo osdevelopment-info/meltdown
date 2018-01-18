@@ -1,5 +1,53 @@
 bits 64
 
+;struct ucontext {
+;        unsigned long     uc_flags;
+;        struct ucontext  *uc_link;
+;        stack_t           uc_stack;
+;        struct sigcontext uc_mcontext;
+;        sigset_t          uc_sigmask;   /* mask last for extensibility */
+;};
+
+;typedef struct sigaltstack {
+;        void *ss_sp;
+;        int ss_flags;
+;        size_t ss_size;
+;} stack_t;
+
+;struct sigcontext {
+;        __u64 r8;
+;        __u64 r9;
+;        __u64 r10;
+;        __u64 r11;
+;        __u64 r12;
+;        __u64 r13;
+;        __u64 r14;
+;        __u64 r15;
+;        __u64 rdi;
+;        __u64 rsi;
+;        __u64 rbp;
+;        __u64 rbx;
+;        __u64 rdx;
+;        __u64 rax;
+;        __u64 rcx;
+;        __u64 rsp;
+;        __u64 rip;
+;        __u64 eflags;           /* RFLAGS */
+;        __u16 cs;
+;        __u16 gs;
+;        __u16 fs;
+;        __u16 __pad0;
+;        __u64 err;
+;        __u64 trapno;
+;        __u64 oldmask;
+;        __u64 cr2;
+;        struct _fpstate *fpstate;       /* zero when no FPU context */
+;#ifdef __ILP32__
+;        __u32 __fpstate_pad;
+;#endif
+;        __u64 reserved1[8];
+;};
+
 section .bss
     scratch:         resb 4096
     dest:            resb 1024*1024
@@ -30,6 +78,8 @@ section .rodata
     slen_ucontext:      equ $-sucontext
     suc_flags:          db "uc_flags (from ucontext): 0x"
     slen_uc_flags:      equ $-suc_flags
+    ssigcontext:        db "Signal Context (from uContext): 0x"
+    slen_sigcontext:    equ $-ssigcontext
     ssigsegv:           db "Catched SIGSEGV",0x0a
     slen_sigsegv:       equ $-ssigsegv
     scr:                db 0x0a
@@ -282,6 +332,24 @@ sighandler:
     syscall
     mov   RSI,R15            ; ucontext
     mov   RAX,[RSI]          ; ucontext.uc_flags
+    mov   RDI,scratch
+    call  printhqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssigcontext
+    mov   RDX,slen_sigcontext
+    syscall
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI+40+128]   ; ucontext.sigcontext.rip
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
