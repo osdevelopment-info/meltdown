@@ -100,7 +100,7 @@ section .data
                          dq 0x04000004  ; sa_flags (SA_RESTORER | SA_SIGINFO)
                          dq sa_restorer ; sa_restorer
                          dq 0           ; sa_mask
-    sigaction_old:       dq 0,0,0,0     ; old sa_handler
+    sigaction_old:       dq 0,0,0,0,0   ; old sa_handler
 
 section .text
     extern printqw
