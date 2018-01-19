@@ -55,6 +55,8 @@ section .data
     slen_feat_pat:   equ $-sfeat_pat
     sfeat_pse36:     db " pse-36"
     slen_feat_pse36: equ $-sfeat_pse36
+    sfeat_psn:       db " psn"
+    slen_feat_psn:   equ $-sfeat_psn
     scr:             db 0xa
 
 section .text
@@ -314,4 +316,12 @@ no_pat:
     mov   RDX,slen_feat_pse36
     syscall
 no_pse36:
+    bt    R13,18             ; test for psn
+    jnc   no_psn
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_psn
+    mov   RDX,slen_feat_psn
+    syscall
+no_psn:
     ret
