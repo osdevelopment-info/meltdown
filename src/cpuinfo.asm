@@ -79,6 +79,8 @@ section .data
     slen_feat_tm:    equ $-sfeat_tm
     sfeat_pbe:       db " pbe"
     slen_feat_pbe:   equ $-sfeat_pbe
+    sfeat_sse3:      db " sse3"
+    slen_feat_sse3:  equ $-sfeat_sse3
     scr:             db 0xa
 
 section .text
@@ -188,6 +190,7 @@ simple_model:
     syscall
 
     call  handle_features1
+    call  handle_features2
 
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
@@ -434,4 +437,15 @@ no_tm:
     mov   RDX,slen_feat_pbe
     syscall
 no_pbe:
+    ret
+
+handle_features2:
+	bt    R12,0              ; test for sse3
+    jnc   no_sse3
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_sse3
+    mov   RDX,slen_feat_sse3
+    syscall
+no_sse3:
     ret
