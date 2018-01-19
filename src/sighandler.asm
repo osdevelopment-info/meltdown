@@ -54,43 +54,51 @@ section .bss
     src:             resb 1024*1024
 
 section .rodata
-    sstart_copy:        db "Start copying data",0x0a
-    slen_start_copy:    equ $-sstart_copy
-    snotregistered:     db "Cannot register signal handler",0x0a
-    slen_notregistered: equ $-snotregistered
-    ssignal_nr1:        db "Signal Nr (from function parameter): "
-    slen_signal_nr1:    equ $-ssignal_nr1
-    ssiginfo:           db "Signal Info (address): 0x"
-    slen_siginfo:       equ $-ssiginfo
-    ssignal_nr2:        db "Signal Nr (from siginfo): "
-    slen_signal_nr2:    equ $-ssignal_nr2
-    serror_nr:          db "Error Nr (from siginfo): "
-    slen_error_nr:      equ $-serror_nr
-    scode:              db "Code (from siginfo): "
-    slen_code:          equ $-scode
-    ssigaddr:           db "Address (Memory ref): 0x"
-    slen_sigaddr:       equ $-ssigaddr
-    ssrcaddr:           db "Address (src + 1Mi): 0x"
-    slen_srcaddr:       equ $-ssrcaddr
-    sinsaddr:           db "Address (copy instruction): 0x"
-    slen_insaddr:       equ $-sinsaddr
-    sucontext:          db "uContext (address): 0x"
-    slen_ucontext:      equ $-sucontext
-    suc_flags:          db "uc_flags (from ucontext): 0x"
-    slen_uc_flags:      equ $-suc_flags
-    ssigcontext:        db "ucontext.sigcontext.rip: 0x"
-    slen_sigcontext:    equ $-ssigcontext
-    ssigsegv:           db "Catched SIGSEGV",0x0a
-    slen_sigsegv:       equ $-ssigsegv
-    scr:                db 0x0a
+    sstart_copy:         db "Start copying data",0x0a
+    slen_start_copy:     equ $-sstart_copy
+    snotregistered:      db "Cannot register signal handler",0x0a
+    slen_notregistered:  equ $-snotregistered
+    ssignal_nr1:         db "Signal Nr (from function parameter): "
+    slen_signal_nr1:     equ $-ssignal_nr1
+    ssiginfo:            db "Signal Info (address): 0x"
+    slen_siginfo:        equ $-ssiginfo
+    ssignal_nr2:         db "Signal Nr (from siginfo): "
+    slen_signal_nr2:     equ $-ssignal_nr2
+    serror_nr:           db "Error Nr (from siginfo): "
+    slen_error_nr:       equ $-serror_nr
+    scode:               db "Code (from siginfo): "
+    slen_code:           equ $-scode
+    ssigaddr:            db "Address (Memory ref): 0x"
+    slen_sigaddr:        equ $-ssigaddr
+    ssrcaddr:            db "Address (src + 1Mi): 0x"
+    slen_srcaddr:        equ $-ssrcaddr
+    sinsaddr:            db "Address (copy instruction): 0x"
+    slen_insaddr:        equ $-sinsaddr
+    sucontext:           db "uContext (address): 0x"
+    slen_ucontext:       equ $-sucontext
+    suc_flags:           db "uc_flags (from ucontext): 0x"
+    slen_uc_flags:       equ $-suc_flags
+    ssigcontext_rip:     db "ucontext.sigcontext.rip: 0x"
+    slen_sigcontext_rip: equ $-ssigcontext_rip
+    ssigcontext_rcx:     db "ucontext.sigcontext.rcx: 0x"
+    slen_sigcontext_rcx: equ $-ssigcontext_rcx
+    ssigcontext_rsi:     db "ucontext.sigcontext.rsi: 0x"
+    slen_sigcontext_rsi: equ $-ssigcontext_rsi
+    ssigcontext_rdi:     db "ucontext.sigcontext.rdi: 0x"
+    slen_sigcontext_rdi: equ $-ssigcontext_rdi
+    ssigsegv:            db "Catched SIGSEGV",0x0a
+    slen_sigsegv:        equ $-ssigsegv
+    strampoline:         db "Trampoline",0x0a
+    slen_trampoline:     equ $-strampoline
+    scr:                 db 0x0a
 
 section .data
-    tries:              dq 0           ; number of tries for the copy
-    sigaction_act:      dq sighandler  ; sa_handler
-                        dq 0x04000004  ; sa_flags (SA_RESTORER | SA_SIGINFO)
-                        dq sa_restorer ; sa_restorer
-                        dq 0           ; sa_mask
-    sigaction_old:      dq 0,0,0,0     ; old sa_handler
+    tries:               dq 0           ; number of tries for the copy
+    sigaction_act:       dq sighandler  ; sa_handler
+                         dq 0x04000004  ; sa_flags (SA_RESTORER | SA_SIGINFO)
+                         dq sa_restorer ; sa_restorer
+                         dq 0           ; sa_mask
+    sigaction_old:       dq 0,0,0,0     ; old sa_handler
 
 section .text
     extern printqw
@@ -149,6 +157,12 @@ failed_register:
     syscall
 
 sa_restorer:
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,strampoline
+    mov   RDX,slen_trampoline
+    syscall
+
     mov   RAX,15             ; sys sigreturn
     syscall
 
@@ -345,8 +359,8 @@ sighandler:
     syscall
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
-    mov   RSI,ssigcontext
-    mov   RDX,slen_sigcontext
+    mov   RSI,ssigcontext_rip
+    mov   RDX,slen_sigcontext_rip
     syscall
     mov   RSI,R15            ; ucontext
     mov   RAX,[RSI+40+128]   ; ucontext.sigcontext.rip
@@ -361,6 +375,66 @@ sighandler:
     mov   RSI,scr
     mov   RDX,1
     syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssigcontext_rcx
+    mov   RDX,slen_sigcontext_rcx
+    syscall
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI+40+112]   ; ucontext.sigcontext.rcx
+    mov   RDI,scratch
+    call  printhqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssigcontext_rsi
+    mov   RDX,slen_sigcontext_rsi
+    syscall
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI+40+72]    ; ucontext.sigcontext.rsi
+    mov   RDI,scratch
+    call  printhqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssigcontext_rdi
+    mov   RDX,slen_sigcontext_rdi
+    syscall
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI+40+64]    ; ucontext.sigcontext.rdi
+    mov   RDI,scratch
+    call  printhqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+
+    mov   RAX,normal_end     ; move the address of the normal end to the RIP
+    mov   RSI,R15            ; ucontext
+    mov   [RSI+40+128],RAX   ; ucontext.sigcontext.rip
+
+    ret
 
     mov   RAX,60             ; sys exit
     mov   RDI,1              ; exit code
