@@ -80,6 +80,8 @@ section .rodata
     slen_uc_flags:       equ $-suc_flags
     ssigcontext_rip:     db "ucontext.sigcontext.rip: 0x"
     slen_sigcontext_rip: equ $-ssigcontext_rip
+    ssigcontext_rsp:     db "ucontext.sigcontext.rsp: 0x"
+    slen_sigcontext_rsp: equ $-ssigcontext_rsp
     ssigcontext_rcx:     db "ucontext.sigcontext.rcx: 0x"
     slen_sigcontext_rcx: equ $-ssigcontext_rcx
     ssigcontext_rsi:     db "ucontext.sigcontext.rsi: 0x"
@@ -273,7 +275,7 @@ sighandler:
     mov   RDX,slen_sigaddr
     syscall
     mov   RSI,R14            ; siginfo
-    mov   RAX,[RSI+12]       ; siginfo._sigfault._addr
+    mov   RAX,[RSI+16]       ; siginfo._sigfault._addr
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
@@ -364,6 +366,24 @@ sighandler:
     syscall
     mov   RSI,R15            ; ucontext
     mov   RAX,[RSI+40+128]   ; ucontext.sigcontext.rip
+    mov   RDI,scratch
+    call  printhqw
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scratch
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,ssigcontext_rsp
+    mov   RDX,slen_sigcontext_rsp
+    syscall
+    mov   RSI,R15            ; ucontext
+    mov   RAX,[RSI+40+120]   ; ucontext.sigcontext.rsp
     mov   RDI,scratch
     call  printhqw
     mov   RAX,1              ; sys write
