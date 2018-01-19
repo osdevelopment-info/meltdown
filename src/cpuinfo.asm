@@ -59,6 +59,8 @@ section .data
     slen_feat_psn:   equ $-sfeat_psn
     sfeat_clfsh:     db " clfsh"
     slen_feat_clfsh: equ $-sfeat_clfsh
+    sfeat_ds:        db " ds"
+    slen_feat_ds:    equ $-sfeat_ds
     scr:             db 0xa
 
 section .text
@@ -334,4 +336,12 @@ no_psn:
     mov   RDX,slen_feat_clfsh
     syscall
 no_clfsh:
+    bt    R13,21             ; test for ds
+    jnc   no_ds
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_ds
+    mov   RDX,slen_feat_ds
+    syscall
+no_ds:
     ret
