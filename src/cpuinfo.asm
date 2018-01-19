@@ -61,6 +61,8 @@ section .data
     slen_feat_clfsh: equ $-sfeat_clfsh
     sfeat_ds:        db " ds"
     slen_feat_ds:    equ $-sfeat_ds
+    sfeat_acpi:      db " acpi"
+    slen_feat_acpi:  equ $-sfeat_acpi
     scr:             db 0xa
 
 section .text
@@ -344,4 +346,12 @@ no_clfsh:
     mov   RDX,slen_feat_ds
     syscall
 no_ds:
+    bt    R13,22             ; test for acpi
+    jnc   no_acpi
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_acpi
+    mov   RDX,slen_feat_acpi
+    syscall
+no_acpi:
     ret
