@@ -51,6 +51,8 @@ section .data
     slen_feat_mca:  equ $-sfeat_mca
     sfeat_cmov:     db " cmov"
     slen_feat_cmov: equ $-sfeat_cmov
+    sfeat_pat:      db " pat"
+    slen_feat_pat:  equ $-sfeat_pat
     scr:            db 0xa
 
 section .text
@@ -294,4 +296,12 @@ no_mca:
     mov   RDX,slen_feat_cmov
     syscall
 no_cmov:
+    bt    R13,16             ; test for pat
+    jnc   no_pat
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pat
+    mov   RDX,slen_feat_pat
+    syscall
+no_pat:
     ret
