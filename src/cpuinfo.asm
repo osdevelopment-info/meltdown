@@ -67,6 +67,8 @@ section .data
     slen_feat_mmx:   equ $-sfeat_mmx
     sfeat_fxsr:      db " fxsr"
     slen_feat_fxsr:  equ $-sfeat_fxsr
+    sfeat_sse:       db " sse"
+    slen_feat_sse:   equ $-sfeat_sse
     scr:             db 0xa
 
 section .text
@@ -374,4 +376,12 @@ no_mmx:
     mov   RDX,slen_feat_fxsr
     syscall
 no_fxsr:
+    bt    R13,25             ; test for sse
+    jnc   no_sse
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_sse
+    mov   RDX,slen_feat_sse
+    syscall
+no_sse:
     ret
