@@ -5,55 +5,57 @@ section .bss
     scratch:    resb 4096
 
 section .data
-    svendor:        db "vendor_id: "
-    scpu_vend:      db "xxxxxxxxxxxx",0xa
-    slen_vendor:    equ $-svendor
-    smax_cpuid:     db "Max Basic CPUID value: "
-    slen_max_cpuid: equ $-smax_cpuid
-    sfamily:        db "cpu family: 0x"
-    scpu_family:    db "xxxx",0xa
-    slen_family:    equ $-sfamily
-    smodel:         db "cpu model: 0x"
-    scpu_model:     db "xxxx",0xa
-    slen_model:     equ $-smodel
-    sstepping:      db "stepping: 0x"
-    scpu_stepping:  db "xx",0xa
-    slen_stepping:  equ $-sstepping
-    sfeatures:      db "features:"
-    slen_features:  equ $-sfeatures
-    sfeat_fpu:      db " fpu"
-    slen_feat_fpu:  equ $-sfeat_fpu
-    sfeat_vme:      db " vme"
-    slen_feat_vme:  equ $-sfeat_vme
-    sfeat_de:       db " de"
-    slen_feat_de:   equ $-sfeat_de
-    sfeat_pse:      db " pse"
-    slen_feat_pse:  equ $-sfeat_pse
-    sfeat_tsc:      db " tsc"
-    slen_feat_tsc:  equ $-sfeat_tsc
-    sfeat_msr:      db " msr"
-    slen_feat_msr:  equ $-sfeat_msr
-    sfeat_pae:      db " pae"
-    slen_feat_pae:  equ $-sfeat_pae
-    sfeat_mce:      db " mce"
-    slen_feat_mce:  equ $-sfeat_mce
-    sfeat_cx8:      db " cx8"
-    slen_feat_cx8:  equ $-sfeat_cx8
-    sfeat_apic:     db " apic"
-    slen_feat_apic: equ $-sfeat_apic
-    sfeat_sep:      db " sep"
-    slen_feat_sep:  equ $-sfeat_sep
-    sfeat_mtrr:     db " mtrr"
-    slen_feat_mtrr: equ $-sfeat_mtrr
-    sfeat_pge:      db " pge"
-    slen_feat_pge:  equ $-sfeat_pge
-    sfeat_mca:      db " mca"
-    slen_feat_mca:  equ $-sfeat_mca
-    sfeat_cmov:     db " cmov"
-    slen_feat_cmov: equ $-sfeat_cmov
-    sfeat_pat:      db " pat"
-    slen_feat_pat:  equ $-sfeat_pat
-    scr:            db 0xa
+    svendor:         db "vendor_id: "
+    scpu_vend:       db "xxxxxxxxxxxx",0xa
+    slen_vendor:     equ $-svendor
+    smax_cpuid:      db "Max Basic CPUID value: "
+    slen_max_cpuid:  equ $-smax_cpuid
+    sfamily:         db "cpu family: 0x"
+    scpu_family:     db "xxxx",0xa
+    slen_family:     equ $-sfamily
+    smodel:          db "cpu model: 0x"
+    scpu_model:      db "xxxx",0xa
+    slen_model:      equ $-smodel
+    sstepping:       db "stepping: 0x"
+    scpu_stepping:   db "xx",0xa
+    slen_stepping:   equ $-sstepping
+    sfeatures:       db "features:"
+    slen_features:   equ $-sfeatures
+    sfeat_fpu:       db " fpu"
+    slen_feat_fpu:   equ $-sfeat_fpu
+    sfeat_vme:       db " vme"
+    slen_feat_vme:   equ $-sfeat_vme
+    sfeat_de:        db " de"
+    slen_feat_de:    equ $-sfeat_de
+    sfeat_pse:       db " pse"
+    slen_feat_pse:   equ $-sfeat_pse
+    sfeat_tsc:       db " tsc"
+    slen_feat_tsc:   equ $-sfeat_tsc
+    sfeat_msr:       db " msr"
+    slen_feat_msr:   equ $-sfeat_msr
+    sfeat_pae:       db " pae"
+    slen_feat_pae:   equ $-sfeat_pae
+    sfeat_mce:       db " mce"
+    slen_feat_mce:   equ $-sfeat_mce
+    sfeat_cx8:       db " cx8"
+    slen_feat_cx8:   equ $-sfeat_cx8
+    sfeat_apic:      db " apic"
+    slen_feat_apic:  equ $-sfeat_apic
+    sfeat_sep:       db " sep"
+    slen_feat_sep:   equ $-sfeat_sep
+    sfeat_mtrr:      db " mtrr"
+    slen_feat_mtrr:  equ $-sfeat_mtrr
+    sfeat_pge:       db " pge"
+    slen_feat_pge:   equ $-sfeat_pge
+    sfeat_mca:       db " mca"
+    slen_feat_mca:   equ $-sfeat_mca
+    sfeat_cmov:      db " cmov"
+    slen_feat_cmov:  equ $-sfeat_cmov
+    sfeat_pat:       db " pat"
+    slen_feat_pat:   equ $-sfeat_pat
+    sfeat_pse36:     db " pse-36"
+    slen_feat_pse36: equ $-sfeat_pse36
+    scr:             db 0xa
 
 section .text
     extern printqw
@@ -304,4 +306,12 @@ no_cmov:
     mov   RDX,slen_feat_pat
     syscall
 no_pat:
+    bt    R13,17             ; test for pse-36
+    jnc   no_pse36
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pse36
+    mov   RDX,slen_feat_pse36
+    syscall
+no_pse36:
     ret
