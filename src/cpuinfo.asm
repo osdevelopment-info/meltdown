@@ -77,6 +77,8 @@ section .data
     slen_feat_htt:   equ $-sfeat_htt
     sfeat_tm:        db " tm"
     slen_feat_tm:    equ $-sfeat_tm
+    sfeat_pbe:       db " pbe"
+    slen_feat_pbe:   equ $-sfeat_pbe
     scr:             db 0xa
 
 section .text
@@ -424,4 +426,12 @@ no_htt:
     mov   RDX,slen_feat_tm
     syscall
 no_tm:
+    bt    R13,31             ; test for pbe
+    jnc   no_pbe
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_pbe
+    mov   RDX,slen_feat_pbe
+    syscall
+no_pbe:
     ret
