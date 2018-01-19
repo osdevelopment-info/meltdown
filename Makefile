@@ -9,7 +9,7 @@ clean:
 	rm -rf bin
 	rm -rf build
 
-all: prepare cpuinfo sighandler
+all: prepare cpuinfo sighandler sigretry
 
 prepare:
 	mkdir -p bin
@@ -24,8 +24,14 @@ cpuinfo.o:
 sighandler.o:
 	$(NASM) $(NASM_OPTS) src/sighandler.asm -l build/sighandler.lst -o build/sighandler.o
 
+sigretry.o:
+	$(NASM) $(NASM_OPTS) src/sigretry.asm -l build/sigretry.lst -o build/sigretry.o
+
 cpuinfo: print.o cpuinfo.o
 	$(LD) $(LD_OPTS) -o bin/cpuinfo build/print.o build/cpuinfo.o
 
 sighandler: print.o sighandler.o
 	$(LD) $(LD_OPTS) -o bin/sighandler build/print.o build/sighandler.o
+
+sigretry: print.o sigretry.o
+	$(LD) $(LD_OPTS) -o bin/sigretry build/print.o build/sigretry.o
