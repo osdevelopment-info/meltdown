@@ -65,6 +65,8 @@ section .data
     slen_feat_acpi:  equ $-sfeat_acpi
     sfeat_mmx:       db " mmx"
     slen_feat_mmx:   equ $-sfeat_mmx
+    sfeat_fxsr:      db " fxsr"
+    slen_feat_fxsr:  equ $-sfeat_fxsr
     scr:             db 0xa
 
 section .text
@@ -364,4 +366,12 @@ no_acpi:
     mov   RDX,slen_feat_mmx
     syscall
 no_mmx:
+    bt    R13,24             ; test for fxsr
+    jnc   no_fxsr
+    mov   RAX,1              ; sys write
+    mov   RDI,1              ; stdout
+    mov   RSI,sfeat_fxsr
+    mov   RDX,slen_feat_fxsr
+    syscall
+no_fxsr:
     ret
