@@ -7,103 +7,105 @@ section .bss
     output:     resb 65536
 
 section .data
-    svendor:             db "vendor_id: "
-    len_vendor:          equ $-svendor
-    smax_cpuid:          db "Max Basic CPUID value: "
-    slen_max_cpuid:      equ $-smax_cpuid
-    sfamily:             db "cpu family: 0x"
-    slen_family:         equ $-sfamily
-    smodel:              db "cpu model: 0x"
-    slen_model:          equ $-smodel
-    sstepping:           db "stepping: 0x"
-    slen_stepping:       equ $-sstepping
-    sfeatures:           db "features:"
-    slen_features:       equ $-sfeatures
-    sfeat_fpu:           db " fpu"
-    slen_feat_fpu:       equ $-sfeat_fpu
-    sfeat_vme:           db " vme"
-    slen_feat_vme:       equ $-sfeat_vme
-    sfeat_de:            db " de"
-    slen_feat_de:        equ $-sfeat_de
-    sfeat_pse:           db " pse"
-    slen_feat_pse:       equ $-sfeat_pse
-    sfeat_tsc:           db " tsc"
-    slen_feat_tsc:       equ $-sfeat_tsc
-    sfeat_msr:           db " msr"
-    slen_feat_msr:       equ $-sfeat_msr
-    sfeat_pae:           db " pae"
-    slen_feat_pae:       equ $-sfeat_pae
-    sfeat_mce:           db " mce"
-    slen_feat_mce:       equ $-sfeat_mce
-    sfeat_cx8:           db " cx8"
-    slen_feat_cx8:       equ $-sfeat_cx8
-    sfeat_apic:          db " apic"
-    slen_feat_apic:      equ $-sfeat_apic
-    sfeat_sep:           db " sep"
-    slen_feat_sep:       equ $-sfeat_sep
-    sfeat_mtrr:          db " mtrr"
-    slen_feat_mtrr:      equ $-sfeat_mtrr
-    sfeat_pge:           db " pge"
-    slen_feat_pge:       equ $-sfeat_pge
-    sfeat_mca:           db " mca"
-    slen_feat_mca:       equ $-sfeat_mca
-    sfeat_cmov:          db " cmov"
-    slen_feat_cmov:      equ $-sfeat_cmov
-    sfeat_pat:           db " pat"
-    slen_feat_pat:       equ $-sfeat_pat
-    sfeat_pse36:         db " pse-36"
-    slen_feat_pse36:     equ $-sfeat_pse36
-    sfeat_psn:           db " psn"
-    slen_feat_psn:       equ $-sfeat_psn
-    sfeat_clfsh:         db " clfsh"
-    slen_feat_clfsh:     equ $-sfeat_clfsh
-    sfeat_ds:            db " ds"
-    slen_feat_ds:        equ $-sfeat_ds
-    sfeat_acpi:          db " acpi"
-    slen_feat_acpi:      equ $-sfeat_acpi
-    sfeat_mmx:           db " mmx"
-    slen_feat_mmx:       equ $-sfeat_mmx
-    sfeat_fxsr:          db " fxsr"
-    slen_feat_fxsr:      equ $-sfeat_fxsr
-    sfeat_sse:           db " sse"
-    slen_feat_sse:       equ $-sfeat_sse
-    sfeat_sse2:          db " sse2"
-    slen_feat_sse2:      equ $-sfeat_sse2
-    sfeat_ss:            db " ss"
-    slen_feat_ss:        equ $-sfeat_ss
-    sfeat_htt:           db " htt"
-    slen_feat_htt:       equ $-sfeat_htt
-    sfeat_tm:            db " tm"
-    slen_feat_tm:        equ $-sfeat_tm
-    sfeat_pbe:           db " pbe"
-    slen_feat_pbe:       equ $-sfeat_pbe
-    sfeat_sse3:          db " sse3"
-    slen_feat_sse3:      equ $-sfeat_sse3
-    sfeat_pclmulqdq:     db " pclmulqdq"
-    slen_feat_pclmulqdq: equ $-sfeat_pclmulqdq
-    sfeat_dtes64:        db " dtes64"
-    slen_feat_dtes64:    equ $-sfeat_dtes64
-    sfeat_monitor:       db " monitor"
-    slen_feat_monitor:   equ $-sfeat_monitor
-    sfeat_dscpl:         db " ds-cpl"
-    slen_feat_dscpl:     equ $-sfeat_dscpl
-    sfeat_vmx:           db " vmx"
-    slen_feat_vmx:       equ $-sfeat_vmx
-    sfeat_smx:           db " smx"
-    slen_feat_smx:       equ $-sfeat_smx
-    sfeat_eist:          db " eist"
-    slen_feat_eist:      equ $-sfeat_eist
-    sfeat_tm2:           db " tm2"
-    slen_feat_tm2:       equ $-sfeat_tm2
-    sfeat_ssse3:         db " ssse3"
-    slen_feat_ssse3:     equ $-sfeat_ssse3
-    sfeat_cnxtid:        db " cnxt-id"
-    slen_feat_cnxtid:    equ $-sfeat_cnxtid
-    sfeat_sdbg:          db " sdbg"
-    slen_feat_sdbg:      equ $-sfeat_sdbg
-    sfeat_fma:           db " fma"
-    slen_feat_fma:       equ $-sfeat_fma
-    scr:                 db 0xa
+    svendor:              db "vendor_id: "
+    len_vendor:           equ $-svendor
+    smax_cpuid:           db "Max Basic CPUID value: "
+    slen_max_cpuid:       equ $-smax_cpuid
+    sfamily:              db "cpu family: 0x"
+    slen_family:          equ $-sfamily
+    smodel:               db "cpu model: 0x"
+    slen_model:           equ $-smodel
+    sstepping:            db "stepping: 0x"
+    slen_stepping:        equ $-sstepping
+    sfeatures:            db "features:"
+    slen_features:        equ $-sfeatures
+    sfeat_fpu:            db " fpu"
+    slen_feat_fpu:        equ $-sfeat_fpu
+    sfeat_vme:            db " vme"
+    slen_feat_vme:        equ $-sfeat_vme
+    sfeat_de:             db " de"
+    slen_feat_de:         equ $-sfeat_de
+    sfeat_pse:            db " pse"
+    slen_feat_pse:        equ $-sfeat_pse
+    sfeat_tsc:            db " tsc"
+    slen_feat_tsc:        equ $-sfeat_tsc
+    sfeat_msr:            db " msr"
+    slen_feat_msr:        equ $-sfeat_msr
+    sfeat_pae:            db " pae"
+    slen_feat_pae:        equ $-sfeat_pae
+    sfeat_mce:            db " mce"
+    slen_feat_mce:        equ $-sfeat_mce
+    sfeat_cx8:            db " cx8"
+    slen_feat_cx8:        equ $-sfeat_cx8
+    sfeat_apic:           db " apic"
+    slen_feat_apic:       equ $-sfeat_apic
+    sfeat_sep:            db " sep"
+    slen_feat_sep:        equ $-sfeat_sep
+    sfeat_mtrr:           db " mtrr"
+    slen_feat_mtrr:       equ $-sfeat_mtrr
+    sfeat_pge:            db " pge"
+    slen_feat_pge:        equ $-sfeat_pge
+    sfeat_mca:            db " mca"
+    slen_feat_mca:        equ $-sfeat_mca
+    sfeat_cmov:           db " cmov"
+    slen_feat_cmov:       equ $-sfeat_cmov
+    sfeat_pat:            db " pat"
+    slen_feat_pat:        equ $-sfeat_pat
+    sfeat_pse36:          db " pse-36"
+    slen_feat_pse36:      equ $-sfeat_pse36
+    sfeat_psn:            db " psn"
+    slen_feat_psn:        equ $-sfeat_psn
+    sfeat_clfsh:          db " clfsh"
+    slen_feat_clfsh:      equ $-sfeat_clfsh
+    sfeat_ds:             db " ds"
+    slen_feat_ds:         equ $-sfeat_ds
+    sfeat_acpi:           db " acpi"
+    slen_feat_acpi:       equ $-sfeat_acpi
+    sfeat_mmx:            db " mmx"
+    slen_feat_mmx:        equ $-sfeat_mmx
+    sfeat_fxsr:           db " fxsr"
+    slen_feat_fxsr:       equ $-sfeat_fxsr
+    sfeat_sse:            db " sse"
+    slen_feat_sse:        equ $-sfeat_sse
+    sfeat_sse2:           db " sse2"
+    slen_feat_sse2:       equ $-sfeat_sse2
+    sfeat_ss:             db " ss"
+    slen_feat_ss:         equ $-sfeat_ss
+    sfeat_htt:            db " htt"
+    slen_feat_htt:        equ $-sfeat_htt
+    sfeat_tm:             db " tm"
+    slen_feat_tm:         equ $-sfeat_tm
+    sfeat_pbe:            db " pbe"
+    slen_feat_pbe:        equ $-sfeat_pbe
+    sfeat_sse3:           db " sse3"
+    slen_feat_sse3:       equ $-sfeat_sse3
+    sfeat_pclmulqdq:      db " pclmulqdq"
+    slen_feat_pclmulqdq:  equ $-sfeat_pclmulqdq
+    sfeat_dtes64:         db " dtes64"
+    slen_feat_dtes64:     equ $-sfeat_dtes64
+    sfeat_monitor:        db " monitor"
+    slen_feat_monitor:    equ $-sfeat_monitor
+    sfeat_dscpl:          db " ds-cpl"
+    slen_feat_dscpl:      equ $-sfeat_dscpl
+    sfeat_vmx:            db " vmx"
+    slen_feat_vmx:        equ $-sfeat_vmx
+    sfeat_smx:            db " smx"
+    slen_feat_smx:        equ $-sfeat_smx
+    sfeat_eist:           db " eist"
+    slen_feat_eist:       equ $-sfeat_eist
+    sfeat_tm2:            db " tm2"
+    slen_feat_tm2:        equ $-sfeat_tm2
+    sfeat_ssse3:          db " ssse3"
+    slen_feat_ssse3:      equ $-sfeat_ssse3
+    sfeat_cnxtid:         db " cnxt-id"
+    slen_feat_cnxtid:     equ $-sfeat_cnxtid
+    sfeat_sdbg:           db " sdbg"
+    slen_feat_sdbg:       equ $-sfeat_sdbg
+    sfeat_fma:            db " fma"
+    slen_feat_fma:        equ $-sfeat_fma
+    sfeat_cmpxchg16b:     db " cmpxchg16b"
+    slen_feat_cmpxchg16b: equ $-sfeat_cmpxchg16b
+    scr:                  db 0xa
 
 section .text
     extern printqw
@@ -605,4 +607,11 @@ no_sdbg:
     rep
     movsb
 no_fma:
+	bt    R12,13             ; test for cmpxchg16b
+    jnc   no_cmpxchg16b
+    mov   RSI,sfeat_cmpxchg16b
+    mov   RCX,slen_feat_cmpxchg16b
+    rep
+    movsb
+no_cmpxchg16b:
     ret
