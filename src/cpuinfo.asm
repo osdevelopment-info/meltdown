@@ -1,23 +1,21 @@
 bits 64
 
 section .bss
+    cpu_vendor: resb 1       ; storage for the vendor: Intel (0x00)/AMD (0x01)/unknown (0xff)
     cpu_family: resb 1       ; storage for the processor family
     scratch:    resb 4096
+    output:     resb 65536
 
 section .data
     svendor:         db "vendor_id: "
-    scpu_vend:       db "xxxxxxxxxxxx",0xa
-    slen_vendor:     equ $-svendor
+    len_vendor:      equ $-svendor
     smax_cpuid:      db "Max Basic CPUID value: "
     slen_max_cpuid:  equ $-smax_cpuid
     sfamily:         db "cpu family: 0x"
-    scpu_family:     db "xxxx",0xa
     slen_family:     equ $-sfamily
     smodel:          db "cpu model: 0x"
-    scpu_model:      db "xxxx",0xa
     slen_model:      equ $-smodel
     sstepping:       db "stepping: 0x"
-    scpu_stepping:   db "xx",0xa
     slen_stepping:   equ $-sstepping
     sfeatures:       db "features:"
     slen_features:   equ $-sfeatures
@@ -95,37 +93,59 @@ section .text
     global _start
 
 ; Scratch registers (for the complete programm)
-; R8 maximum Basic CPUID Information
+; R12 maximum Basic CPUID Information
+; R15 short term storage
 _start:
     xor   RAX,RAX            ; clear RAX
     cpuid                    ; get cpu information 0x00 (Basic CPUID Information)
     mov   R8,RAX             ; save the maximal for Basic CPUID Information
-    mov   [scpu_vend],EBX    ; copy vendor information to reserved string 
-    mov   [scpu_vend+4],EDX
-    mov   [scpu_vend+8],ECX
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,svendor
-    mov   RDX,slen_vendor
-    syscall
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,smax_cpuid
-    mov   RDX,slen_max_cpuid
-    syscall
-    mov   RAX,R8             ; restore the maximum Basic CPUID Information
-    mov   RDI,scratch        ; mov the scratch area for usage of print
-    call  printdw            ; print the max number of Basic CPUID Information
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,scratch
-    syscall
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,scr
-    mov   RDX,1
-    syscall
 
+    mov   RSI,svendor
+    mov   RDI,output
+    mov   R15,RCX
+    mov   RCX,len_vendor
+    rep
+    movsb
+
+    mov   RCX,R15
+    mov   [RDI],EBX          ; copy vendor information to reserved string 
+    mov   [RDI+4],EDX
+    mov   [RDI+8],ECX
+    add   RDI,12
+    mov   RSI,scr
+    movsb
+
+    cmp   EBX,"Genu"
+    je    vendor_intel
+    cmp   EBX,"Auth"
+    je    vendor_amd
+    mov   [cpu_vendor],byte 0xff
+    jmp   vendor_done
+vendor_amd:
+    mov   [cpu_vendor],byte 0x01
+    jmp   vendor_done
+vendor_intel:
+    mov   [cpu_vendor],byte 0x00
+vendor_done:
+
+    mov   RSI,smax_cpuid
+    mov   RCX,slen_max_cpuid
+    rep
+    movsb
+
+    mov   RAX,R8             ; restore the maximum Basic CPUID Information
+    call  printdw            ; print the max number of Basic CPUID Information
+
+    mov   RSI,scr
+    movsb
+
+    cmp   [cpu_vendor],byte 0x00 ; this is an Intel CPU
+    je    known_vendor
+    cmp   [cpu_vendor],byte 0x01 ; this is an AMD CPU
+    je    known_vendor
+    jmp   unknown_vendor
+
+known_vendor:
     mov   RAX,R8             ; restore the maximum Basic CPUID Information
     cmp   EAX,1              ; check if node 1 is supported by CPUID
     jl    done_basic         ; if 1 is not supported we're done
@@ -145,59 +165,90 @@ _start:
     shr   EAX,20             ; get the extended family information
     and   EAX,0xff           ; mask the extended family information
     add   EAX,0x0f           ; add the family
+
 simple_family:
-    mov   RDI,scpu_family
-    call  printhw
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
-    mov   RSI,sfamily
-    mov   RDX,slen_family
-    syscall
+    mov   RSI,sfamily        ; copy the family string
+    mov   RCX,slen_family
+    rep
+    movsb
+    call  printhw            ; print out the family
+
+    mov   RSI,scr            ; append CR
+    movsb
+
+    cmp   [cpu_vendor],byte 0x00 ; this is an Intel CPU
+    je    intel_model
+    cmp   [cpu_vendor],byte 0x01 ; this is an AMD CPU
+    je    amd_model
+    jmp   unknown_vendor
+
+intel_model:
     mov   RAX,R9             ; restore model information
     shr   EAX,4              ; get bit 4 (lsb of model) to bit 0
     and   EAX,0x0f           ; mask the bits of the model
     mov   BL,[cpu_family]    ; get the family information back
     cmp   BL,0x06            ; test if we need extended model information (0x06 or 0x0f)
-    je    extended_model
+    je    extended_intel_model
     cmp   BL,0x0f
     jne   simple_model
-extended_model:
+extended_intel_model:
     mov   RBX,R9             ; restore model information
     shr   EBX,12             ; get the extended model information to the high nibble
     and   EBX,0xf0
     or    EAX,EBX            ; add the model information to the low nibble
+    jmp   simple_model
+amd_model:
+    mov   RAX,R9             ; restore model information
+    shr   EAX,4              ; get bit 4 (lsb of model) to bit 0
+    and   EAX,0x0f           ; mask the bits of the model
+    mov   BL,[cpu_family]    ; get the family information back
+    cmp   BL,0x0f
+    jne   simple_model
+    mov   RBX,R9             ; restore model information
+    shr   EBX,12             ; get the extended model information to the high nibble
+    and   EBX,0xf0
+    or    EAX,EBX            ; add the model information to the low nibble
+
 simple_model:
-    mov   RDI,scpu_model
-    call  printhw
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,smodel
-    mov   RDX,slen_model
-    syscall
+    mov   RCX,slen_model
+    rep
+    movsb
+    call  printhw            ; print out the model
+    mov   RSI,scr            ; append CR
+    movsb
+
     mov   RAX,R9             ; restore stepping information
     and   EAX,0x0f           ; mask the stepping information
-    mov   RDI,scpu_stepping
-    call  printhb
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
+
     mov   RSI,sstepping
-    mov   RDX,slen_stepping
-    syscall
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
+    mov   RCX,slen_stepping
+    rep
+    movsb
+    call  printhb            ; print out the model
+    mov   RSI,scr            ; append CR
+    movsb
+
     mov   RSI,sfeatures
-    mov   RDX,slen_features
-    syscall
+    mov   RCX,slen_features
+    rep
+    movsb
 
     call  handle_features1
     call  handle_features2
 
+    mov   RSI,scr            ; append CR
+    movsb
+
+    mov   RDX,RDI            ; calculate the length of the output
+    sub   RDX,output
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
-    mov   RSI,scr
-    mov   RDX,1
+    mov   RSI,output
     syscall
 
+
+unknown_vendor:
 done_basic:
 
     xor   RDI,RDI            ; exit code
@@ -207,245 +258,215 @@ done_basic:
 handle_features1:
     bt    R13,0              ; test for fpu
     jnc   no_fpu
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_fpu
-    mov   RDX,slen_feat_fpu
-    syscall
+    mov   RCX,slen_feat_fpu
+    rep
+    movsb
 no_fpu:
     bt    R13,1              ; test for vme
     jnc   no_vme
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_vme
-    mov   RDX,slen_feat_vme
-    syscall
+    mov   RCX,slen_feat_vme
+    rep
+    movsb
 no_vme:
     bt    R13,2              ; test for de
     jnc   no_de
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_de
-    mov   RDX,slen_feat_de
-    syscall
+    mov   RCX,slen_feat_de
+    rep
+    movsb
 no_de:
     bt    R13,3              ; test for pse
     jnc   no_pse
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pse
-    mov   RDX,slen_feat_pse
-    syscall
+    mov   RCX,slen_feat_pse
+    rep
+    movsb
 no_pse:
     bt    R13,4              ; test for tsc
     jnc   no_tsc
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_tsc
-    mov   RDX,slen_feat_tsc
-    syscall
+    mov   RCX,slen_feat_tsc
+    rep
+    movsb
 no_tsc:
     bt    R13,5              ; test for msr
     jnc   no_msr
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_msr
-    mov   RDX,slen_feat_msr
-    syscall
+    mov   RCX,slen_feat_msr
+    rep
+    movsb
 no_msr:
     bt    R13,6              ; test for pae
     jnc   no_pae
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pae
-    mov   RDX,slen_feat_pae
-    syscall
+    mov   RCX,slen_feat_pae
+    rep
+    movsb
 no_pae:
     bt    R13,7              ; test for mce
     jnc   no_mce
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_mce
-    mov   RDX,slen_feat_mce
-    syscall
+    mov   RCX,slen_feat_mce
+    rep
+    movsb
 no_mce:
     bt    R13,8              ; test for cx8
     jnc   no_cx8
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_cx8
-    mov   RDX,slen_feat_cx8
-    syscall
+    mov   RCX,slen_feat_cx8
+    rep
+    movsb
 no_cx8:
     bt    R13,9              ; test for apic
     jnc   no_apic
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_apic
-    mov   RDX,slen_feat_apic
-    syscall
+    mov   RCX,slen_feat_apic
+    rep
+    movsb
 no_apic:
     bt    R13,11             ; test for sep
     jnc   no_sep
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_sep
-    mov   RDX,slen_feat_sep
-    syscall
+    mov   RCX,slen_feat_sep
+    rep
+    movsb
 no_sep:
     bt    R13,12             ; test for mtrr
     jnc   no_mtrr
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_mtrr
-    mov   RDX,slen_feat_mtrr
-    syscall
+    mov   RCX,slen_feat_mtrr
+    rep
+    movsb
 no_mtrr:
     bt    R13,13             ; test for pge
     jnc   no_pge
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pge
-    mov   RDX,slen_feat_pge
-    syscall
+    mov   RCX,slen_feat_pge
+    rep
+    movsb
 no_pge:
     bt    R13,14             ; test for mca
     jnc   no_mca
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_mca
-    mov   RDX,slen_feat_mca
-    syscall
+    mov   RCX,slen_feat_mca
+    rep
+    movsb
 no_mca:
     bt    R13,15             ; test for cmov
     jnc   no_cmov
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_cmov
-    mov   RDX,slen_feat_cmov
-    syscall
+    mov   RCX,slen_feat_cmov
+    rep
+    movsb
 no_cmov:
     bt    R13,16             ; test for pat
     jnc   no_pat
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pat
-    mov   RDX,slen_feat_pat
-    syscall
+    mov   RCX,slen_feat_pat
+    rep
+    movsb
 no_pat:
     bt    R13,17             ; test for pse-36
     jnc   no_pse36
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pse36
-    mov   RDX,slen_feat_pse36
-    syscall
+    mov   RCX,slen_feat_pse36
+    rep
+    movsb
 no_pse36:
     bt    R13,18             ; test for psn
     jnc   no_psn
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_psn
-    mov   RDX,slen_feat_psn
-    syscall
+    mov   RCX,slen_feat_psn
+    rep
+    movsb
 no_psn:
     bt    R13,19             ; test for clfsh
     jnc   no_clfsh
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_clfsh
-    mov   RDX,slen_feat_clfsh
-    syscall
+    mov   RCX,slen_feat_clfsh
+    rep
+    movsb
 no_clfsh:
     bt    R13,21             ; test for ds
     jnc   no_ds
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_ds
-    mov   RDX,slen_feat_ds
-    syscall
+    mov   RCX,slen_feat_ds
+    rep
+    movsb
 no_ds:
     bt    R13,22             ; test for acpi
     jnc   no_acpi
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_acpi
-    mov   RDX,slen_feat_acpi
-    syscall
+    mov   RCX,slen_feat_acpi
+    rep
+    movsb
 no_acpi:
     bt    R13,23             ; test for mmx
     jnc   no_mmx
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_mmx
-    mov   RDX,slen_feat_mmx
-    syscall
+    mov   RCX,slen_feat_mmx
+    rep
+    movsb
 no_mmx:
     bt    R13,24             ; test for fxsr
     jnc   no_fxsr
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_fxsr
-    mov   RDX,slen_feat_fxsr
-    syscall
+    mov   RCX,slen_feat_fxsr
+    rep
+    movsb
 no_fxsr:
     bt    R13,25             ; test for sse
     jnc   no_sse
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_sse
-    mov   RDX,slen_feat_sse
-    syscall
+    mov   RCX,slen_feat_sse
+    rep
+    movsb
 no_sse:
     bt    R13,26             ; test for sse2
     jnc   no_sse2
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_sse2
-    mov   RDX,slen_feat_sse2
-    syscall
+    mov   RCX,slen_feat_sse2
+    rep
+    movsb
 no_sse2:
     bt    R13,27             ; test for ss
     jnc   no_ss
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_ss
-    mov   RDX,slen_feat_ss
-    syscall
+    mov   RCX,slen_feat_ss
+    rep
+    movsb
 no_ss:
     bt    R13,28             ; test for htt
     jnc   no_htt
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_htt
-    mov   RDX,slen_feat_htt
-    syscall
+    mov   RCX,slen_feat_htt
+    rep
+    movsb
 no_htt:
     bt    R13,29             ; test for tm
     jnc   no_tm
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_tm
-    mov   RDX,slen_feat_tm
-    syscall
+    mov   RCX,slen_feat_tm
+    rep
+    movsb
 no_tm:
     bt    R13,31             ; test for pbe
     jnc   no_pbe
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_pbe
-    mov   RDX,slen_feat_pbe
-    syscall
+    mov   RCX,slen_feat_pbe
+    rep
+    movsb
 no_pbe:
     ret
 
 handle_features2:
 	bt    R12,0              ; test for sse3
     jnc   no_sse3
-    mov   RAX,1              ; sys write
-    mov   RDI,1              ; stdout
     mov   RSI,sfeat_sse3
-    mov   RDX,slen_feat_sse3
-    syscall
+    mov   RCX,slen_feat_sse3
+    rep
+    movsb
 no_sse3:
     ret

@@ -31,13 +31,13 @@ cachetiming.o:
 	$(NASM) $(NASM_OPTS) src/cachetiming.asm -l build/cachetiming.lst -o build/cachetiming.o
 
 cpuinfo: print.o cpuinfo.o
-	$(LD) $(LD_OPTS) -o bin/cpuinfo build/print.o build/cpuinfo.o
+	$(LD) $(LD_OPTS) -o bin/cpuinfo build/cpuinfo.o build/print.o
 
 sighandler: print.o sighandler.o
-	$(LD) $(LD_OPTS) -o bin/sighandler build/print.o build/sighandler.o
+	$(LD) $(LD_OPTS) -o bin/sighandler build/sighandler.o build/print.o
 
 sigretry: print.o sigretry.o
-	$(LD) $(LD_OPTS) -o bin/sigretry build/print.o build/sigretry.o
+	$(LD) $(LD_OPTS) -o bin/sigretry build/sigretry.o build/print.o
 
 cachetiming: print.o cachetiming.o
-	$(LD) $(LD_OPTS) -o bin/cachetiming build/print.o build/cachetiming.o
+	$(LD) $(LD_OPTS) -o bin/cachetiming build/cachetiming.o build/print.o
