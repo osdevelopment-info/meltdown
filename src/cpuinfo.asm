@@ -81,6 +81,8 @@ section .data
     slen_feat_sse3:      equ $-sfeat_sse3
     sfeat_pclmulqdq:     db " pclmulqdq"
     slen_feat_pclmulqdq: equ $-sfeat_pclmulqdq
+    sfeat_dtes64:        db " dtes64"
+    slen_feat_dtes64:    equ $-sfeat_dtes64
     scr:                 db 0xa
 
 section .text
@@ -490,4 +492,13 @@ no_sse3:
     rep
     movsb
 no_pclmulqdq:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_dtes64
+    bt    R12,2              ; test for dtes64
+    jnc   no_dtes64
+    mov   RSI,sfeat_dtes64
+    mov   RCX,slen_feat_dtes64
+    rep
+    movsb
+no_dtes64:
     ret
