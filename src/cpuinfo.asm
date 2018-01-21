@@ -91,6 +91,8 @@ section .data
     slen_feat_vmx:       equ $-sfeat_vmx
     sfeat_smx:           db " smx"
     slen_feat_smx:       equ $-sfeat_smx
+    sfeat_eist:          db " eist"
+    slen_feat_eist:      equ $-sfeat_eist
     scr:                 db 0xa
 
 section .text
@@ -543,4 +545,13 @@ no_vmx:
     rep
     movsb
 no_smx:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_eist
+    bt    R12,7              ; test for eist
+    jnc   no_eist
+    mov   RSI,sfeat_eist
+    mov   RCX,slen_feat_eist
+    rep
+    movsb
+no_eist:
     ret
