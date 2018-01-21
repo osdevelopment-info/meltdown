@@ -95,6 +95,8 @@ section .data
     slen_feat_eist:      equ $-sfeat_eist
     sfeat_tm2:           db " tm2"
     slen_feat_tm2:       equ $-sfeat_tm2
+    sfeat_ssse3:         db " ssse3"
+    slen_feat_ssse3:     equ $-sfeat_ssse3
     scr:                 db 0xa
 
 section .text
@@ -565,4 +567,11 @@ no_eist:
     rep
     movsb
 no_tm2:
+	bt    R12,9              ; test for ssse3
+    jnc   no_ssse3
+    mov   RSI,sfeat_ssse3
+    mov   RCX,slen_feat_ssse3
+    rep
+    movsb
+no_ssse3:
     ret
