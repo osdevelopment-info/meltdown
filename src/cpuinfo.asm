@@ -85,6 +85,8 @@ section .data
     slen_feat_dtes64:    equ $-sfeat_dtes64
     sfeat_monitor:       db " monitor"
     slen_feat_monitor:   equ $-sfeat_monitor
+    sfeat_dscpl:         db " ds-cpl"
+    slen_feat_dscpl:     equ $-sfeat_dscpl
     scr:                 db 0xa
 
 section .text
@@ -510,4 +512,13 @@ no_dtes64:
     rep
     movsb
 no_monitor:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_dscpl
+    bt    R12,4              ; test for dscpl
+    jnc   no_dscpl
+    mov   RSI,sfeat_dscpl
+    mov   RCX,slen_feat_dscpl
+    rep
+    movsb
+no_dscpl:
     ret
