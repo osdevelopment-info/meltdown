@@ -83,6 +83,8 @@ section .data
     slen_feat_pclmulqdq: equ $-sfeat_pclmulqdq
     sfeat_dtes64:        db " dtes64"
     slen_feat_dtes64:    equ $-sfeat_dtes64
+    sfeat_monitor:       db " monitor"
+    slen_feat_monitor:   equ $-sfeat_monitor
     scr:                 db 0xa
 
 section .text
@@ -501,4 +503,11 @@ no_pclmulqdq:
     rep
     movsb
 no_dtes64:
+	bt    R12,3              ; test for monitor
+    jnc   no_monitor
+    mov   RSI,sfeat_monitor
+    mov   RCX,slen_feat_monitor
+    rep
+    movsb
+no_monitor:
     ret
