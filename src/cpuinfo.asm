@@ -101,6 +101,8 @@ section .data
     slen_feat_cnxtid:    equ $-sfeat_cnxtid
     sfeat_sdbg:          db " sdbg"
     slen_feat_sdbg:      equ $-sfeat_sdbg
+    sfeat_fma:           db " fma"
+    slen_feat_fma:       equ $-sfeat_fma
     scr:                 db 0xa
 
 section .text
@@ -596,4 +598,11 @@ no_cnxtid:
     rep
     movsb
 no_sdbg:
+	bt    R12,12             ; test for fma
+    jnc   no_fma
+    mov   RSI,sfeat_fma
+    mov   RCX,slen_feat_fma
+    rep
+    movsb
+no_fma:
     ret
