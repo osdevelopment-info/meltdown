@@ -97,6 +97,8 @@ section .data
     slen_feat_tm2:       equ $-sfeat_tm2
     sfeat_ssse3:         db " ssse3"
     slen_feat_ssse3:     equ $-sfeat_ssse3
+    sfeat_cnxtid:        db " cnxt-id"
+    slen_feat_cnxtid:    equ $-sfeat_cnxtid
     scr:                 db 0xa
 
 section .text
@@ -574,4 +576,13 @@ no_tm2:
     rep
     movsb
 no_ssse3:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_cnxtid
+	bt    R12,10             ; test for cnxtid
+    jnc   no_cnxtid
+    mov   RSI,sfeat_cnxtid
+    mov   RCX,slen_feat_cnxtid
+    rep
+    movsb
+no_cnxtid:
     ret
