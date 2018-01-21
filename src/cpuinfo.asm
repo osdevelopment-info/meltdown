@@ -87,6 +87,8 @@ section .data
     slen_feat_monitor:   equ $-sfeat_monitor
     sfeat_dscpl:         db " ds-cpl"
     slen_feat_dscpl:     equ $-sfeat_dscpl
+    sfeat_vmx:           db " vmx"
+    slen_feat_vmx:       equ $-sfeat_vmx
     scr:                 db 0xa
 
 section .text
@@ -521,4 +523,13 @@ no_monitor:
     rep
     movsb
 no_dscpl:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_vmx
+    bt    R12,5              ; test for vmx
+    jnc   no_vmx
+    mov   RSI,sfeat_vmx
+    mov   RCX,slen_feat_vmx
+    rep
+    movsb
+no_vmx:
     ret
