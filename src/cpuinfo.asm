@@ -89,6 +89,8 @@ section .data
     slen_feat_dscpl:     equ $-sfeat_dscpl
     sfeat_vmx:           db " vmx"
     slen_feat_vmx:       equ $-sfeat_vmx
+    sfeat_smx:           db " smx"
+    slen_feat_smx:       equ $-sfeat_smx
     scr:                 db 0xa
 
 section .text
@@ -532,4 +534,13 @@ no_dscpl:
     rep
     movsb
 no_vmx:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_smx
+    bt    R12,6              ; test for smx
+    jnc   no_smx
+    mov   RSI,sfeat_smx
+    mov   RCX,slen_feat_smx
+    rep
+    movsb
+no_smx:
     ret
