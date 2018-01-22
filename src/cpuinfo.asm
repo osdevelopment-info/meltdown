@@ -125,6 +125,8 @@ section .data
     slen_feat_popcnt:       equ $-sfeat_popcnt
     sfeat_tsc_deadline:     db " tsc-deadline"
     slen_feat_tsc_deadline: equ $-sfeat_tsc_deadline
+    sfeat_aes:              db " aes"
+    slen_feat_aes:          equ $-sfeat_aes
     scr:                    db 0xa
 
 section .text
@@ -716,4 +718,11 @@ no_popcnt:
     rep
     movsb
 no_tsc_deadline:
+	bt    R12,25             ; test for aes
+    jnc   no_aes
+    mov   RSI,sfeat_aes
+    mov   RCX,slen_feat_aes
+    rep
+    movsb
+no_aes:
     ret
