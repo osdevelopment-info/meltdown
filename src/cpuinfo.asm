@@ -113,6 +113,14 @@ section .data
     slen_feat_pcid:       equ $-sfeat_pcid
     sfeat_dca:            db " dca"
     slen_feat_dca:        equ $-sfeat_dca
+    sfeat_sse41:          db " sse4.1"
+    slen_feat_sse41:      equ $-sfeat_sse41
+    sfeat_sse42:          db " sse4.2"
+    slen_feat_sse42:      equ $-sfeat_sse42
+    sfeat_x2apic:         db " x2apic"
+    slen_feat_x2apic:     equ $-sfeat_x2apic
+    sfeat_movbe:          db " movbe"
+    slen_feat_movbe:      equ $-sfeat_movbe
     scr:                  db 0xa
 
 section .text
@@ -658,4 +666,34 @@ no_pcid:
     rep
     movsb
 no_dca:
+	bt    R12,19             ; test for sse4.1
+    jnc   no_sse41
+    mov   RSI,sfeat_sse41
+    mov   RCX,slen_feat_sse41
+    rep
+    movsb
+no_sse41:
+	bt    R12,20             ; test for sse4.2
+    jnc   no_sse42
+    mov   RSI,sfeat_sse42
+    mov   RCX,slen_feat_sse42
+    rep
+    movsb
+no_sse42:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_x2apic
+	bt    R12,21             ; test for x2apic
+    jnc   no_x2apic
+    mov   RSI,sfeat_x2apic
+    mov   RCX,slen_feat_x2apic
+    rep
+    movsb
+no_x2apic:
+	bt    R12,22             ; test for movbe
+    jnc   no_movbe
+    mov   RSI,sfeat_movbe
+    mov   RCX,slen_feat_movbe
+    rep
+    movsb
+no_movbe:
     ret
