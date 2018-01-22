@@ -105,6 +105,8 @@ section .data
     slen_feat_fma:        equ $-sfeat_fma
     sfeat_cmpxchg16b:     db " cmpxchg16b"
     slen_feat_cmpxchg16b: equ $-sfeat_cmpxchg16b
+    sfeat_xtpr:           db " xtpr"
+    slen_feat_xtpr:       equ $-sfeat_xtpr
     scr:                  db 0xa
 
 section .text
@@ -614,4 +616,13 @@ no_fma:
     rep
     movsb
 no_cmpxchg16b:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_xtpr
+	bt    R12,14             ; test for xtpr
+    jnc   no_xtpr
+    mov   RSI,sfeat_xtpr
+    mov   RCX,slen_feat_xtpr
+    rep
+    movsb
+no_xtpr:
     ret
