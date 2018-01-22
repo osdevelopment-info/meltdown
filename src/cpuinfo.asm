@@ -111,6 +111,8 @@ section .data
     slen_feat_pdcm:       equ $-sfeat_pdcm
     sfeat_pcid:           db " pcid"
     slen_feat_pcid:       equ $-sfeat_pcid
+    sfeat_dca:            db " dca"
+    slen_feat_dca:        equ $-sfeat_dca
     scr:                  db 0xa
 
 section .text
@@ -647,4 +649,13 @@ no_pdcm:
     rep
     movsb
 no_pcid:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_dca
+	bt    R12,18             ; test for dca
+    jnc   no_dca
+    mov   RSI,sfeat_dca
+    mov   RCX,slen_feat_dca
+    rep
+    movsb
+no_dca:
     ret
