@@ -121,6 +121,8 @@ section .data
     slen_feat_x2apic:     equ $-sfeat_x2apic
     sfeat_movbe:          db " movbe"
     slen_feat_movbe:      equ $-sfeat_movbe
+    sfeat_popcnt:         db " popcnt"
+    slen_feat_popcnt:     equ $-sfeat_popcnt
     scr:                  db 0xa
 
 section .text
@@ -696,4 +698,11 @@ no_x2apic:
     rep
     movsb
 no_movbe:
+	bt    R12,23             ; test for popcnt
+    jnc   no_popcnt
+    mov   RSI,sfeat_popcnt
+    mov   RCX,slen_feat_popcnt
+    rep
+    movsb
+no_popcnt:
     ret
