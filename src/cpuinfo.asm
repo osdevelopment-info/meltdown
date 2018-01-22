@@ -107,6 +107,8 @@ section .data
     slen_feat_cmpxchg16b: equ $-sfeat_cmpxchg16b
     sfeat_xtpr:           db " xtpr"
     slen_feat_xtpr:       equ $-sfeat_xtpr
+    sfeat_pdcm:           db " pscm"
+    slen_feat_pdcm:       equ $-sfeat_pdcm
     scr:                  db 0xa
 
 section .text
@@ -625,4 +627,13 @@ no_cmpxchg16b:
     rep
     movsb
 no_xtpr:
+    cmp   [cpu_vendor],byte 0x00 ; test for Intel
+    jne   no_pdcm
+	bt    R12,15             ; test for pdcm
+    jnc   no_pdcm
+    mov   RSI,sfeat_pdcm
+    mov   RCX,slen_feat_pdcm
+    rep
+    movsb
+no_pdcm:
     ret
