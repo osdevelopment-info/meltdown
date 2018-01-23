@@ -136,7 +136,9 @@ section .data
     sfeat_f16c:             db " f16c"
     slen_feat_f16c:         equ $-sfeat_f16c
     sfeat_rdrand:           db " rdrand"
-    slen_feat_rdrand:         equ $-sfeat_rdrand
+    slen_feat_rdrand:       equ $-sfeat_rdrand
+    scacheline:             db "cache line size: "
+    len_cacheline:          equ $-scacheline
     scr:                    db 0xa
 
 section .text
@@ -295,6 +297,19 @@ simple_model:
     call  handle_features1
     call  handle_features2
 
+    mov   RSI,scr            ; append CR
+    movsb
+
+    mov   RSI,scacheline
+    mov   RCX,len_cacheline
+    rep
+    movsb
+    mov   RAX,R10
+    shr   RAX,8
+    and   RAX,0x0f
+    mov   RBX,8
+    mul   RBX
+    call  printw
     mov   RSI,scr            ; append CR
     movsb
 
