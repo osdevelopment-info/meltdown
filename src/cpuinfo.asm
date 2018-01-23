@@ -135,6 +135,8 @@ section .data
     slen_feat_avx:          equ $-sfeat_avx
     sfeat_f16c:             db " f16c"
     slen_feat_f16c:         equ $-sfeat_f16c
+    sfeat_rdrand:           db " rdrand"
+    slen_feat_rdrand:         equ $-sfeat_rdrand
     scr:                    db 0xa
 
 section .text
@@ -761,4 +763,11 @@ no_avx:
     rep
     movsb
 no_f16c:
+	bt    R12,30             ; test for rdrand
+    jnc   no_rdrand
+    mov   RSI,sfeat_rdrand
+    mov   RCX,slen_feat_rdrand
+    rep
+    movsb
+no_rdrand:
     ret
