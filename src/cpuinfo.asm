@@ -129,6 +129,8 @@ section .data
     slen_feat_aes:          equ $-sfeat_aes
     sfeat_xsave:            db " xsave"
     slen_feat_xsave:        equ $-sfeat_xsave
+    sfeat_osxsave:          db " osxsave"
+    slen_feat_osxsave:      equ $-sfeat_osxsave
     scr:                    db 0xa
 
 section .text
@@ -734,4 +736,11 @@ no_aes:
     rep
     movsb
 no_xsave:
+	bt    R12,27             ; test for osxsave
+    jnc   no_osxsave
+    mov   RSI,sfeat_osxsave
+    mov   RCX,slen_feat_osxsave
+    rep
+    movsb
+no_osxsave:
     ret
