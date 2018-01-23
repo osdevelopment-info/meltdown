@@ -24,8 +24,9 @@ section .text
 _start:
     mov   RSI,data           ; move address of data to RSI
     mov   RBP,measures
+    mov   RCX,256
     clflush [RSI]            ; flush the cache
-    clflush [RSI+1024]       ; flush the cache
+    clflush [RSI+RCX]        ; flush the cache
 
     mov   RBX,[RSI]
 
@@ -61,11 +62,12 @@ _start:
     mov   RDX,len_timing
     syscall
 
+    mov   RCX,256
     mov   RSI,data           ; move address of data to RSI
     clflush [RSI]            ; flush the cache
-    clflush [RSI+1024]       ; flush the cache
+    clflush [RSI+RCX]        ; flush the cache
 
-    mov   RBX,[RSI+1024]
+    mov   RBX,[RSI+RCX]
 
     call  time_calc
 
@@ -106,7 +108,8 @@ _start:
 ; Get the time for reading data (with and w/o cache) by getting two values from
 ; a probe array (with some distance)
 ; - in
-; RSI: start of the probe array (must be at least 4100 bytes)
+; RSI: start of the probe array (must be at least RCX bytes)
+; RCX: offset in the probe array for the second access
 ; - out
 ; R15: the 1st time stamp (start of 1st read)
 ; R14: the 2nd time stamp (end of 1st read/start of 2nd read)
@@ -130,7 +133,7 @@ time_calc:
     add   RAX,RDX            ; add it to the low double word
     mov   R14,RAX            ; save the value to R14
 
-    mov   RBX,[RSI+1024]     ; load data from the probe array
+    mov   RBX,[RSI+RCX]      ; load data from the probe array
 
     lfence
     rdtsc                    ; get the time stamp counter

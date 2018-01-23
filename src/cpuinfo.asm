@@ -7,9 +7,9 @@ section .bss
     output:     resb 65536
 
 section .data
-    svendor:                db "vendor_id: "
+    svendor:                db "vendor id: "
     len_vendor:             equ $-svendor
-    smax_cpuid:             db "Max Basic CPUID value: "
+    smax_cpuid:             db "cpu level: "
     slen_max_cpuid:         equ $-smax_cpuid
     sfamily:                db "cpu family: 0x"
     slen_family:            equ $-sfamily
