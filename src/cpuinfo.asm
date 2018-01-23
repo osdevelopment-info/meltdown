@@ -139,7 +139,15 @@ section .data
     slen_feat_rdrand:       equ $-sfeat_rdrand
     scacheline:             db "cache line size: "
     len_cacheline:          equ $-scacheline
-    scr:                    db 0xa
+    scachetlb:              db "Cache/TLB information (Intel):",0x0a
+    len_scachetlb:          equ $-scachetlb
+    scachetlb_00:           db ""
+    len_scachetlb_00:       equ $-scachetlb_00
+    scachetlb_01:           dw len_scachetlb_01
+                            db "  Instruction TLB: 4 KByte pages, 4-way set associative, 32 entries",0x0a
+    len_scachetlb_01:       equ $-scachetlb_01
+    cachetlb_lookup:        dq 0x00
+    scr:                    db 0x0a
 
 section .text
     extern printqw
@@ -176,18 +184,26 @@ _start:
     movsb
 
     cmp   EBX,"Genu"
-    je    vendor_intel
+    je    check_intel
     cmp   EBX,"Auth"
-    je    vendor_amd
-    mov   [cpu_vendor],byte 0xff
-    jmp   vendor_done
-vendor_amd:
+    jne   unknown_vendor
+    cmp   EDX,"enti"
+    jne   unknown_vendor
+    cmp   ECX,"cAMD"
+    jne   unknown_vendor
     mov   [cpu_vendor],byte 0x01
     jmp   vendor_done
-vendor_intel:
+check_intel:
+    cmp   EDX,"ineI"
+    jne   unknown_vendor
+    cmp   ECX,"ntel"
+    jne   unknown_vendor
     mov   [cpu_vendor],byte 0x00
-vendor_done:
+    jmp   vendor_done
+unknown_vendor:
+    mov   [cpu_vendor],byte 0xff
 
+vendor_done:
     mov   RSI,smax_cpuid
     mov   RCX,slen_max_cpuid
     rep
@@ -203,7 +219,7 @@ vendor_done:
     je    known_vendor
     cmp   [cpu_vendor],byte 0x01 ; this is an AMD CPU
     je    known_vendor
-    jmp   unknown_vendor
+    jmp   done_basic
 
 known_vendor:
     mov   RAX,R8             ; restore the maximum Basic CPUID Information
@@ -313,16 +329,22 @@ simple_model:
     mov   RSI,scr            ; append CR
     movsb
 
+    mov   RAX,R8             ; restore the maximum Basic CPUID Information
+    cmp   EAX,2              ; check if node 2 is supported by CPUID
+    jl    done_basic         ; if 1 is not supported we're done
+    cmp   [cpu_vendor],byte 0x00 ; this is an Intel CPU
+    jne   no_intel_node2
+    call  intel_node2
+
+no_intel_node2:
+
+done_basic:
     mov   RDX,RDI            ; calculate the length of the output
     sub   RDX,output
     mov   RAX,1              ; sys write
     mov   RDI,1              ; stdout
     mov   RSI,output
     syscall
-
-
-unknown_vendor:
-done_basic:
 
     xor   RDI,RDI            ; exit code
     mov   RAX,60             ; sys exit
@@ -785,4 +807,29 @@ no_f16c:
     rep
     movsb
 no_rdrand:
+    ret
+
+intel_node2:
+    mov   RSI,scachetlb
+    mov   RCX,len_scachetlb
+    rep
+    movsb
+
+    mov   EAX,2              ; get the next node
+    cpuid                    ; get cpu information 0x02 (Cache/TLB information)
+    mov   R9,RAX             ; save Cache/TLB information (1)
+    mov   R10,RBX            ; save Cache/TLB information (1)
+    mov   R12,RCX            ; save Cache/TLB information (1)
+    mov   R13,RDX            ; save Cache/TLB information (1)
+    bt    EAX,31             ; Test information for validity
+    jc    test_node2_ebx
+    shr   EAX,8
+    and   EAX,0xff
+    call  out_cachetlb_info
+
+test_node2_ebx:
+
+    ret
+
+out_cachetlb_info:
     ret
