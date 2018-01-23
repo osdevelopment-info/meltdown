@@ -133,6 +133,8 @@ section .data
     slen_feat_osxsave:      equ $-sfeat_osxsave
     sfeat_avx:              db " avx"
     slen_feat_avx:          equ $-sfeat_avx
+    sfeat_f16c:             db " f16c"
+    slen_feat_f16c:         equ $-sfeat_f16c
     scr:                    db 0xa
 
 section .text
@@ -752,4 +754,11 @@ no_osxsave:
     rep
     movsb
 no_avx:
+	bt    R12,29             ; test for f16c
+    jnc   no_f16c
+    mov   RSI,sfeat_f16c
+    mov   RCX,slen_feat_f16c
+    rep
+    movsb
+no_f16c:
     ret
