@@ -131,6 +131,8 @@ section .data
     slen_feat_xsave:        equ $-sfeat_xsave
     sfeat_osxsave:          db " osxsave"
     slen_feat_osxsave:      equ $-sfeat_osxsave
+    sfeat_avx:              db " avx"
+    slen_feat_avx:          equ $-sfeat_avx
     scr:                    db 0xa
 
 section .text
@@ -743,4 +745,11 @@ no_xsave:
     rep
     movsb
 no_osxsave:
+	bt    R12,28             ; test for avx
+    jnc   no_avx
+    mov   RSI,sfeat_avx
+    mov   RCX,slen_feat_avx
+    rep
+    movsb
+no_avx:
     ret
