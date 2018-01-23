@@ -146,7 +146,32 @@ section .data
     scachetlb_01:           dw len_scachetlb_01
                             db "  Instruction TLB: 4 KByte pages, 4-way set associative, 32 entries",0x0a
     len_scachetlb_01:       equ $-scachetlb_01
-    cachetlb_lookup:        dq 0x00
+    scachetlb_02:           dw len_scachetlb_02
+                            db "  Instruction TLB: 4 MByte pages, fully associative, 2 entries",0x0a
+    len_scachetlb_02:       equ $-scachetlb_02
+    scachetlb_03:           dw len_scachetlb_03
+                            db "  Data TLB: 4 KByte pages, 4-way set associative, 64 entries",0x0a
+    len_scachetlb_03:       equ $-scachetlb_03
+    scachetlb_04:           dw len_scachetlb_04
+                            db "  Data TLB: 4 MByte pages, 4-way set associative, 8 entries",0x0a
+    len_scachetlb_04:       equ $-scachetlb_04
+    scachetlb_05:           dw len_scachetlb_05
+                            db "  Data TLB1: 4 MByte pages, 4-way set associative, 32 entries",0x0a
+    len_scachetlb_05:       equ $-scachetlb_05
+    scachetlb_06:           dw len_scachetlb_06
+                            db "  1st-level instruction cache: 8 KBytes, 4-way set associative, 32 byte line size",0x0a
+    len_scachetlb_06:       equ $-scachetlb_06
+    scachetlb_08:           dw len_scachetlb_08
+                            db "  1st-level instruction cache: 16 KBytes, 4-way set associative, 32 byte line size",0x0a
+    len_scachetlb_08:       equ $-scachetlb_08
+    cachetlb_lookup:        dq scachetlb_00
+                            dq scachetlb_01
+                            dq scachetlb_02
+                            dq scachetlb_03
+                            dq scachetlb_04
+                            dq scachetlb_05
+                            dq scachetlb_06
+                            dq scachetlb_00
     scr:                    db 0x0a
 
 section .text
@@ -818,9 +843,9 @@ intel_node2:
     mov   EAX,2              ; get the next node
     cpuid                    ; get cpu information 0x02 (Cache/TLB information)
     mov   R9,RAX             ; save Cache/TLB information (1)
-    mov   R10,RBX            ; save Cache/TLB information (1)
-    mov   R12,RCX            ; save Cache/TLB information (1)
-    mov   R13,RDX            ; save Cache/TLB information (1)
+    mov   R10,RBX            ; save Cache/TLB information (2)
+    mov   R12,RCX            ; save Cache/TLB information (3)
+    mov   R13,RDX            ; save Cache/TLB information (4)
     bt    EAX,31             ; Test information for validity
     jc    test_node2_ebx
     shr   EAX,8
