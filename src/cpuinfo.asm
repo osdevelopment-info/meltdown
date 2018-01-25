@@ -356,6 +356,27 @@ section .rodata
     scachetlb_7f:           dw len_scachetlb_7f
                             db "  2nd-level cache: 512 KByte, 2-way set associative, 64-byte line size",0x0a
     len_scachetlb_7f:       equ $-scachetlb_7f
+    scachetlb_80:           dw len_scachetlb_80
+                            db "  2nd-level cache: 512 KByte, 8-way set associative, 64-byte line size",0x0a
+    len_scachetlb_80:       equ $-scachetlb_80
+    scachetlb_82:           dw len_scachetlb_82
+                            db "  2nd-level cache: 256 KByte, 8-way set associative, 32 byte line size",0x0a
+    len_scachetlb_82:       equ $-scachetlb_82
+    scachetlb_83:           dw len_scachetlb_83
+                            db "  2nd-level cache: 512 KByte, 8-way set associative, 32 byte line size",0x0a
+    len_scachetlb_83:       equ $-scachetlb_83
+    scachetlb_84:           dw len_scachetlb_84
+                            db "  2nd-level cache: 1 MByte, 8-way set associative, 32 byte line size",0x0a
+    len_scachetlb_84:       equ $-scachetlb_84
+    scachetlb_85:           dw len_scachetlb_85
+                            db "  2nd-level cache: 2 MByte, 8-way set associative, 32 byte line size",0x0a
+    len_scachetlb_85:       equ $-scachetlb_85
+    scachetlb_86:           dw len_scachetlb_86
+                            db "  2nd-level cache: 512 KByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_86:       equ $-scachetlb_86
+    scachetlb_87:           dw len_scachetlb_87
+                            db "  2nd-level cache: 1 MByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_87:       equ $-scachetlb_87
     cachetlb_lookup:        dq scachetlb_00 ; 0x00
                             dq scachetlb_01 ; 0x01
                             dq scachetlb_02 ; 0x02
@@ -484,6 +505,14 @@ section .rodata
                             dq scachetlb_7d ; 0x7d
                             dq scachetlb_00 ; 0x7e
                             dq scachetlb_7f ; 0x7f
+                            dq scachetlb_80 ; 0x80
+                            dq scachetlb_00 ; 0x81
+                            dq scachetlb_82 ; 0x82
+                            dq scachetlb_83 ; 0x83
+                            dq scachetlb_84 ; 0x84
+                            dq scachetlb_85 ; 0x85
+                            dq scachetlb_86 ; 0x86
+                            dq scachetlb_87 ; 0x87
     scr:                    db 0x0a
 
 section .text
