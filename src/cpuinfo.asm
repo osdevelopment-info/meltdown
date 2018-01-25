@@ -1,10 +1,11 @@
 bits 64
 
 section .bss
+    cpuinfo:    times 256 resd 6 ; Create storage for the info from the cpuid
     cpu_vendor: resb 1       ; storage for the vendor: Intel (0x00)/AMD (0x01)/unknown (0xff)
     cpu_family: resb 1       ; storage for the processor family
     scratch:    resb 4096
-    output:     resb 65536
+    output:     resb 131072
 
 section .rodata
     svendor:                db "vendor id: "
@@ -141,7 +142,8 @@ section .rodata
     len_cacheline:          equ $-scacheline
     scachetlb:              db "Cache/TLB information (EAX=0x02) (Intel):",0x0a
     len_scachetlb:          equ $-scachetlb
-    scachetlb_00:           db ""
+    scachetlb_00:           dw len_scachetlb_00
+                            db ""
     len_scachetlb_00:       equ $-scachetlb_00
     scachetlb_01:           dw len_scachetlb_01
                             db "  Instruction TLB: 4 KByte pages, 4-way set associative, 32 entries",0x0a
@@ -738,6 +740,7 @@ section .rodata
     scr:                    db 0x0a
 
 section .text
+    extern prints
     extern printqw
     extern printdw
     extern printw
@@ -1483,17 +1486,15 @@ test_node2_edx:
 test_node2_end:
     ret
 
+;
+append_string:
+    xor   RCX,RCX
+    ret
+
 out_cachetlb_info:
     mov   RCX,8              ; multiply the index with the size of an address (8 byte)
     mul   RCX
     add   RAX,cachetlb_lookup ; add the lookup base address
     mov   RSI,[RAX]          ; load the string
-    xor   RCX,RCX            ; clear RCX
-    mov   CX,[RSI]           ; load the length of the string
-    dec   RCX                ; move two bytes on (length of length)
-    dec   RCX
-    inc   RSI                ; adjust the pointer to the start of the string
-    inc   RSI
-    rep                      ; copy the string to the output
-    movsb
+    call  prints
     ret

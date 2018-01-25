@@ -4,6 +4,7 @@ section .bss
     scratch: resb 32
 
 section .text
+    global prints
     global printqw
     global printdw
     global printw
@@ -13,12 +14,38 @@ section .text
     global printhw
     global printhb
 
+; Append the string [RSI] to the string [RDI]
+; The string starts with a word (16 bit) with the size of the string (incl. the
+; size). The first bytes copied are the bytes after the length field.
+; - in
+; RSI: string source, starts with the length (16 bit)
+; RDI: string target
+; - out
+; RDI: points to the first byte after the copied string
+prints:
+    pushfq                   ; save the flags and registers used
+    push  RCX
+    push  RSI
+    cld                      ; setup for copy
+    xor   RCX,RCX
+    mov   CX,[RSI]           ; move the length of the string to the counter
+    inc   RSI                ; adjust source address
+    inc   RSI
+    dec   RCX                ; adjust counter
+    dec   RCX
+    rep                      ; copy the string to the destination
+    movsb
+    pop   RSI                ; restore the registers and flages
+    pop   RCX
+    popfq
+    ret
+
 ; Format the quad word in RAX decimal
 ; - in
 ; RAX: value to format
 ; RDI: address for the formatted string
 ; - out
-; RDI - points to the first byte after the number
+; RDI: points to the first byte after the number
 ; RDX: number of bytes written (out)
 printqw:
     pushfq
