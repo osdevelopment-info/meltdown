@@ -323,6 +323,39 @@ section .rodata
     scachetlb_6d:           dw len_scachetlb_6d
                             db "  DTLB: 1 GByte pages, fully associative, 16 entries",0x0a
     len_scachetlb_6d:       equ $-scachetlb_6d
+    scachetlb_70:           dw len_scachetlb_70
+                            db "  Trace cache: 12 K-μop, 8-way set associative",0x0a
+    len_scachetlb_70:       equ $-scachetlb_70
+    scachetlb_71:           dw len_scachetlb_71
+                            db "  Trace cache: 16 K-μop, 8-way set associative",0x0a
+    len_scachetlb_71:       equ $-scachetlb_71
+    scachetlb_72:           dw len_scachetlb_72
+                            db "  Trace cache: 32 K-μop, 8-way set associative",0x0a
+    len_scachetlb_72:       equ $-scachetlb_72
+    scachetlb_76:           dw len_scachetlb_76
+                            db "  Instruction TLB: 2M/4M pages, fully associative, 8 entries",0x0a
+    len_scachetlb_76:       equ $-scachetlb_76
+    scachetlb_78:           dw len_scachetlb_78
+                            db "  2nd-level cache: 1 MByte, 4-way set associative, 64byte line size",0x0a
+    len_scachetlb_78:       equ $-scachetlb_78
+    scachetlb_79:           dw len_scachetlb_79
+                            db "  2nd-level cache: 128 KByte, 8-way set associative, 64 byte line size, 2 lines per sector",0x0a
+    len_scachetlb_79:       equ $-scachetlb_79
+    scachetlb_7a:           dw len_scachetlb_7a
+                            db "  2nd-level cache: 256 KByte, 8-way set associative, 64 byte line size, 2 lines per sector",0x0a
+    len_scachetlb_7a:       equ $-scachetlb_7a
+    scachetlb_7b:           dw len_scachetlb_7b
+                            db "  2nd-level cache: 512 KByte, 8-way set associative, 64 byte line size, 2 lines per sector",0x0a
+    len_scachetlb_7b:       equ $-scachetlb_7b
+    scachetlb_7c:           dw len_scachetlb_7c
+                            db "  2nd-level cache: 1 MByte, 8-way set associative, 64 byte line size, 2 lines per sector",0x0a
+    len_scachetlb_7c:       equ $-scachetlb_7c
+    scachetlb_7d:           dw len_scachetlb_7d
+                            db "  2nd-level cache: 2 MByte, 8-way set associative, 64byte line size",0x0a
+    len_scachetlb_7d:       equ $-scachetlb_7d
+    scachetlb_7f:           dw len_scachetlb_7f
+                            db "  2nd-level cache: 512 KByte, 2-way set associative, 64-byte line size",0x0a
+    len_scachetlb_7f:       equ $-scachetlb_7f
     cachetlb_lookup:        dq scachetlb_00 ; 0x00
                             dq scachetlb_01 ; 0x01
                             dq scachetlb_02 ; 0x02
@@ -435,6 +468,22 @@ section .rodata
                             dq scachetlb_6d ; 0x6d
                             dq scachetlb_00 ; 0x6e
                             dq scachetlb_00 ; 0x6f
+                            dq scachetlb_70 ; 0x70
+                            dq scachetlb_71 ; 0x71
+                            dq scachetlb_72 ; 0x72
+                            dq scachetlb_00 ; 0x73
+                            dq scachetlb_00 ; 0x74
+                            dq scachetlb_00 ; 0x75
+                            dq scachetlb_76 ; 0x76
+                            dq scachetlb_00 ; 0x77
+                            dq scachetlb_78 ; 0x78
+                            dq scachetlb_79 ; 0x79
+                            dq scachetlb_7a ; 0x7a
+                            dq scachetlb_7b ; 0x7b
+                            dq scachetlb_7c ; 0x7c
+                            dq scachetlb_7d ; 0x7d
+                            dq scachetlb_00 ; 0x7e
+                            dq scachetlb_7f ; 0x7f
     scr:                    db 0x0a
 
 section .text
