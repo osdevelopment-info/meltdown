@@ -1411,8 +1411,8 @@ intel_node2:
     mov   R13,RDX            ; save Cache/TLB information (4)
     bt    EAX,31             ; Test information for validity
     jc    test_node2_ebx
-    shr   EAX,8
-    and   EAX,0xff
+    shr   RAX,8
+    and   RAX,0xff
     call  out_cachetlb_info
 
 test_node2_ebx:
@@ -1420,4 +1420,16 @@ test_node2_ebx:
     ret
 
 out_cachetlb_info:
+    mov   RCX,8              ; multiply the index with the size of an address (8 byte)
+    mul   RCX
+    add   RAX,cachetlb_lookup ; add the lookup base address
+    mov   RSI,[RAX]          ; load the string
+    xor   RCX,RCX            ; clear RCX
+    mov   CX,[RSI]           ; load the length of the string
+    dec   RCX                ; move two bytes on (length of length)
+    dec   RCX
+    inc   RSI                ; adjust the pointer to the start of the string
+    inc   RSI
+    rep                      ; copy the string to the output
+    movsb
     ret
