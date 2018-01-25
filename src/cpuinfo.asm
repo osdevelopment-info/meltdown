@@ -404,6 +404,81 @@ section .rodata
     scachetlb_ba:           dw len_scachetlb_ba
                             db "  Data TLB1: 4 KByte pages, 4-way associative, 64 entries",0x0a
     len_scachetlb_ba:       equ $-scachetlb_ba
+    scachetlb_c0:           dw len_scachetlb_c0
+                            db "  Data TLB: 4 KByte and 4 MByte pages, 4-way associative, 8 entries",0x0a
+    len_scachetlb_c0:       equ $-scachetlb_c0
+    scachetlb_c1:           dw len_scachetlb_c1
+                            db "  Shared 2nd-Level TLB: 4 KByte/2MByte pages, 8-way associative, 1024 entries",0x0a
+    len_scachetlb_c1:       equ $-scachetlb_c1
+    scachetlb_c2:           dw len_scachetlb_c2
+                            db "  DTLB: 4 KByte/2 MByte pages, 4-way associative, 16 entries",0x0a
+    len_scachetlb_c2:       equ $-scachetlb_c2
+    scachetlb_c3:           dw len_scachetlb_c3
+                            db "  Shared 2nd-Level TLB: 4 KByte /2 MByte pages, 6-way associative, 1536 entries. Also 1GBbyte pages, 4-way, 16 entries.",0x0a
+    len_scachetlb_c3:       equ $-scachetlb_c3
+    scachetlb_c4:           dw len_scachetlb_c4
+                            db "  DTLB: 2M/4M Byte pages, 4-way associative, 32 entries",0x0a
+    len_scachetlb_c4:       equ $-scachetlb_c4
+    scachetlb_ca:           dw len_scachetlb_ca
+                            db "  Shared 2nd-Level TLB: 4 KByte pages, 4-way associative, 512 entries",0x0a
+    len_scachetlb_ca:       equ $-scachetlb_ca
+    scachetlb_d0:           dw len_scachetlb_d0
+                            db "  3rd-level cache: 512 KByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d0:       equ $-scachetlb_d0
+    scachetlb_d1:           dw len_scachetlb_d1
+                            db "  3rd-level cache: 1 MByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d1:       equ $-scachetlb_d1
+    scachetlb_d2:           dw len_scachetlb_d2
+                            db "  3rd-level cache: 2 MByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d2:       equ $-scachetlb_d2
+    scachetlb_d6:           dw len_scachetlb_d6
+                            db "  3rd-level cache: 1 MByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d6:       equ $-scachetlb_d6
+    scachetlb_d7:           dw len_scachetlb_d7
+                            db "  3rd-level cache: 1 MByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d7:       equ $-scachetlb_d7
+    scachetlb_d8:           dw len_scachetlb_d8
+                            db "  3rd-level cache: 4 MByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_d8:       equ $-scachetlb_d8
+    scachetlb_dc:           dw len_scachetlb_dc
+                            db "  3rd-level cache: 1.5 MByte, 12-way set associative, 64 byte line size",0x0a
+    len_scachetlb_dc:       equ $-scachetlb_dc
+    scachetlb_dd:           dw len_scachetlb_dd
+                            db "  3rd-level cache: 3 MByte, 12-way set associative, 64 byte line size",0x0a
+    len_scachetlb_dd:       equ $-scachetlb_dd
+    scachetlb_de:           dw len_scachetlb_de
+                            db "  3rd-level cache: 6 MByte, 12-way set associative, 64 byte line size",0x0a
+    len_scachetlb_de:       equ $-scachetlb_de
+    scachetlb_e2:           dw len_scachetlb_e2
+                            db "  3rd-level cache: 2 MByte, 16-way set associative, 64 byte line size",0x0a
+    len_scachetlb_e2:       equ $-scachetlb_e2
+    scachetlb_e3:           dw len_scachetlb_e3
+                            db "  3rd-level cache: 4 MByte, 16-way set associative, 64 byte line size",0x0a
+    len_scachetlb_e3:       equ $-scachetlb_e3
+    scachetlb_e4:           dw len_scachetlb_e4
+                            db "  3rd-level cache: 8 MByte, 16-way set associative, 64 byte line size",0x0a
+    len_scachetlb_e4:       equ $-scachetlb_e4
+    scachetlb_ea:           dw len_scachetlb_ea
+                            db "  3rd-level cache: 12MByte, 24-way set associative, 64 byte line size",0x0a
+    len_scachetlb_ea:       equ $-scachetlb_ea
+    scachetlb_eb:           dw len_scachetlb_eb
+                            db "  3rd-level cache: 12MByte, 24-way set associative, 64 byte line size",0x0a
+    len_scachetlb_eb:       equ $-scachetlb_eb
+    scachetlb_ec:           dw len_scachetlb_ec
+                            db "  3rd-level cache: 12MByte, 24-way set associative, 64 byte line size",0x0a
+    len_scachetlb_ec:       equ $-scachetlb_ec
+    scachetlb_f0:           dw len_scachetlb_f0
+                            db "  64-Byte prefetching",0x0a
+    len_scachetlb_f0:       equ $-scachetlb_f0
+    scachetlb_f1:           dw len_scachetlb_f1
+                            db "  128-Byte prefetching",0x0a
+    len_scachetlb_f1:       equ $-scachetlb_f1
+    scachetlb_fe:           dw len_scachetlb_fe
+                            db "  CPUID leaf 2 does not report TLB descriptor information; use CPUID leaf 18H to query TLB and other address translation parameters.",0x0a
+    len_scachetlb_fe:       equ $-scachetlb_fe
+    scachetlb_ff:           dw len_scachetlb_ff
+                            db "  CPUID leaf 2 does not report cache descriptor information, use CPUID leaf 4 to query cache parameters",0x0a
+    len_scachetlb_ff:       equ $-scachetlb_ff
     cachetlb_lookup:        dq scachetlb_00 ; 0x00
                             dq scachetlb_01 ; 0x01
                             dq scachetlb_02 ; 0x02
@@ -596,6 +671,70 @@ section .rodata
                             dq scachetlb_00 ; 0xbd
                             dq scachetlb_00 ; 0xbe
                             dq scachetlb_00 ; 0xbf
+                            dq scachetlb_c0 ; 0xc0
+                            dq scachetlb_c1 ; 0xc1
+                            dq scachetlb_c2 ; 0xc2
+                            dq scachetlb_c3 ; 0xc3
+                            dq scachetlb_c4 ; 0xc4
+                            dq scachetlb_00 ; 0xc5
+                            dq scachetlb_00 ; 0xc6
+                            dq scachetlb_00 ; 0xc7
+                            dq scachetlb_00 ; 0xc8
+                            dq scachetlb_00 ; 0xc9
+                            dq scachetlb_ca ; 0xca
+                            dq scachetlb_00 ; 0xcb
+                            dq scachetlb_00 ; 0xcc
+                            dq scachetlb_00 ; 0xcd
+                            dq scachetlb_00 ; 0xce
+                            dq scachetlb_00 ; 0xcf
+                            dq scachetlb_d0 ; 0xd0
+                            dq scachetlb_d1 ; 0xd1
+                            dq scachetlb_d2 ; 0xd2
+                            dq scachetlb_00 ; 0xd3
+                            dq scachetlb_00 ; 0xd4
+                            dq scachetlb_00 ; 0xd5
+                            dq scachetlb_d6 ; 0xd6
+                            dq scachetlb_d7 ; 0xd7
+                            dq scachetlb_d8 ; 0xd8
+                            dq scachetlb_00 ; 0xd9
+                            dq scachetlb_00 ; 0xda
+                            dq scachetlb_00 ; 0xdb
+                            dq scachetlb_dc ; 0xdc
+                            dq scachetlb_dd ; 0xdd
+                            dq scachetlb_de ; 0xde
+                            dq scachetlb_00 ; 0xdf
+                            dq scachetlb_00 ; 0xe0
+                            dq scachetlb_00 ; 0xe1
+                            dq scachetlb_e2 ; 0xe2
+                            dq scachetlb_e3 ; 0xe3
+                            dq scachetlb_e4 ; 0xe4
+                            dq scachetlb_00 ; 0xe5
+                            dq scachetlb_00 ; 0xe6
+                            dq scachetlb_00 ; 0xe7
+                            dq scachetlb_00 ; 0xe8
+                            dq scachetlb_00 ; 0xe9
+                            dq scachetlb_ea ; 0xea
+                            dq scachetlb_eb ; 0xeb
+                            dq scachetlb_ec ; 0xec
+                            dq scachetlb_00 ; 0xed
+                            dq scachetlb_00 ; 0xee
+                            dq scachetlb_00 ; 0xef
+                            dq scachetlb_f0 ; 0xf0
+                            dq scachetlb_f1 ; 0xf1
+                            dq scachetlb_00 ; 0xf2
+                            dq scachetlb_00 ; 0xf3
+                            dq scachetlb_00 ; 0xf4
+                            dq scachetlb_00 ; 0xf5
+                            dq scachetlb_00 ; 0xf6
+                            dq scachetlb_00 ; 0xf7
+                            dq scachetlb_00 ; 0xf8
+                            dq scachetlb_00 ; 0xf9
+                            dq scachetlb_00 ; 0xfa
+                            dq scachetlb_00 ; 0xfb
+                            dq scachetlb_00 ; 0xfc
+                            dq scachetlb_00 ; 0xfd
+                            dq scachetlb_fe ; 0xfe
+                            dq scachetlb_ff ; 0xff
     scr:                    db 0x0a
 
 section .text
