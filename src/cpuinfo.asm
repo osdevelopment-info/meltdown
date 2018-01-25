@@ -377,6 +377,33 @@ section .rodata
     scachetlb_87:           dw len_scachetlb_87
                             db "  2nd-level cache: 1 MByte, 8-way set associative, 64 byte line size",0x0a
     len_scachetlb_87:       equ $-scachetlb_87
+    scachetlb_a0:           dw len_scachetlb_a0
+                            db "  2nd-level cache: 1 MByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_a0:       equ $-scachetlb_a0
+    scachetlb_b0:           dw len_scachetlb_b0
+                            db "  Instruction TLB: 4 KByte pages, 4-way set associative, 128 entries",0x0a
+    len_scachetlb_b0:       equ $-scachetlb_b0
+    scachetlb_b1:           dw len_scachetlb_b1
+                            db "  Instruction TLB: 2M pages, 4-way, 8 entries or 4M pages, 4-way, 4 entries",0x0a
+    len_scachetlb_b1:       equ $-scachetlb_b1
+    scachetlb_b2:           dw len_scachetlb_b2
+                            db "  Instruction TLB: 4KByte pages, 4-way set associative, 64 entries",0x0a
+    len_scachetlb_b2:       equ $-scachetlb_b2
+    scachetlb_b3:           dw len_scachetlb_b3
+                            db "  Data TLB: 4 KByte pages, 4-way set associative, 128 entries",0x0a
+    len_scachetlb_b3:       equ $-scachetlb_b3
+    scachetlb_b4:           dw len_scachetlb_b4
+                            db "  Data TLB1: 4 KByte pages, 4-way associative, 256 entries",0x0a
+    len_scachetlb_b4:       equ $-scachetlb_b4
+    scachetlb_b5:           dw len_scachetlb_b5
+                            db "  Instruction TLB: 4KByte pages, 8-way set associative, 64 entries",0x0a
+    len_scachetlb_b5:       equ $-scachetlb_b5
+    scachetlb_b6:           dw len_scachetlb_b6
+                            db "  Instruction TLB: 4KByte pages, 8-way set associative, 128 entries",0x0a
+    len_scachetlb_b6:       equ $-scachetlb_b6
+    scachetlb_ba:           dw len_scachetlb_ba
+                            db "  Data TLB1: 4 KByte pages, 4-way associative, 64 entries",0x0a
+    len_scachetlb_ba:       equ $-scachetlb_ba
     cachetlb_lookup:        dq scachetlb_00 ; 0x00
                             dq scachetlb_01 ; 0x01
                             dq scachetlb_02 ; 0x02
@@ -513,6 +540,62 @@ section .rodata
                             dq scachetlb_85 ; 0x85
                             dq scachetlb_86 ; 0x86
                             dq scachetlb_87 ; 0x87
+                            dq scachetlb_00 ; 0x88
+                            dq scachetlb_00 ; 0x89
+                            dq scachetlb_00 ; 0x8a
+                            dq scachetlb_00 ; 0x8b
+                            dq scachetlb_00 ; 0x8c
+                            dq scachetlb_00 ; 0x8d
+                            dq scachetlb_00 ; 0x8e
+                            dq scachetlb_00 ; 0x8f
+                            dq scachetlb_00 ; 0x90
+                            dq scachetlb_00 ; 0x91
+                            dq scachetlb_00 ; 0x92
+                            dq scachetlb_00 ; 0x93
+                            dq scachetlb_00 ; 0x94
+                            dq scachetlb_00 ; 0x95
+                            dq scachetlb_00 ; 0x96
+                            dq scachetlb_00 ; 0x97
+                            dq scachetlb_00 ; 0x98
+                            dq scachetlb_00 ; 0x99
+                            dq scachetlb_00 ; 0x9a
+                            dq scachetlb_00 ; 0x9b
+                            dq scachetlb_00 ; 0x9c
+                            dq scachetlb_00 ; 0x9d
+                            dq scachetlb_00 ; 0x9e
+                            dq scachetlb_00 ; 0x9f
+                            dq scachetlb_a0 ; 0xa0
+                            dq scachetlb_00 ; 0xa1
+                            dq scachetlb_00 ; 0xa2
+                            dq scachetlb_00 ; 0xa3
+                            dq scachetlb_00 ; 0xa4
+                            dq scachetlb_00 ; 0xa5
+                            dq scachetlb_00 ; 0xa6
+                            dq scachetlb_00 ; 0xa7
+                            dq scachetlb_00 ; 0xa8
+                            dq scachetlb_00 ; 0xa9
+                            dq scachetlb_00 ; 0xaa
+                            dq scachetlb_00 ; 0xab
+                            dq scachetlb_00 ; 0xac
+                            dq scachetlb_00 ; 0xad
+                            dq scachetlb_00 ; 0xae
+                            dq scachetlb_00 ; 0xaf
+                            dq scachetlb_b0 ; 0xb0
+                            dq scachetlb_b1 ; 0xb1
+                            dq scachetlb_b2 ; 0xb2
+                            dq scachetlb_b3 ; 0xb3
+                            dq scachetlb_b4 ; 0xb4
+                            dq scachetlb_b5 ; 0xb5
+                            dq scachetlb_b6 ; 0xb6
+                            dq scachetlb_00 ; 0xb7
+                            dq scachetlb_00 ; 0xb8
+                            dq scachetlb_00 ; 0xb9
+                            dq scachetlb_ba ; 0xba
+                            dq scachetlb_00 ; 0xbb
+                            dq scachetlb_00 ; 0xbc
+                            dq scachetlb_00 ; 0xbd
+                            dq scachetlb_00 ; 0xbe
+                            dq scachetlb_00 ; 0xbf
     scr:                    db 0x0a
 
 section .text
