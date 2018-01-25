@@ -1409,14 +1409,78 @@ intel_node2:
     mov   R10,RBX            ; save Cache/TLB information (2)
     mov   R12,RCX            ; save Cache/TLB information (3)
     mov   R13,RDX            ; save Cache/TLB information (4)
-    bt    EAX,31             ; Test information for validity
+    bt    RAX,31             ; Test information for validity
     jc    test_node2_ebx
     shr   RAX,8
     and   RAX,0xff
     call  out_cachetlb_info
+    mov   RAX,R9             ; retore Cache/TLB information (1)
+    shr   RAX,16
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R9             ; retore Cache/TLB information (1)
+    shr   RAX,24
+    and   RAX,0xff
+    call  out_cachetlb_info
 
 test_node2_ebx:
+    mov   RAX,R10            ; retore Cache/TLB information (2)
+    bt    RAX,31             ; Test information for validity
+    jc    test_node2_ecx
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R10            ; retore Cache/TLB information (2)
+    shr   RAX,8
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R10            ; retore Cache/TLB information (2)
+    shr   RAX,16
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R10            ; retore Cache/TLB information (2)
+    shr   RAX,24
+    and   RAX,0xff
+    call  out_cachetlb_info
 
+test_node2_ecx:
+    mov   RAX,R12            ; retore Cache/TLB information (3)
+    bt    RAX,31             ; Test information for validity
+    jc    test_node2_edx
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R12            ; retore Cache/TLB information (3)
+    shr   RAX,8
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R12            ; retore Cache/TLB information (3)
+    shr   RAX,16
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R12            ; retore Cache/TLB information (3)
+    shr   RAX,24
+    and   RAX,0xff
+    call  out_cachetlb_info
+
+test_node2_edx:
+    mov   RAX,R13            ; retore Cache/TLB information (4)
+    bt    RAX,31             ; Test information for validity
+    jc    test_node2_end
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R13            ; retore Cache/TLB information (4)
+    shr   RAX,8
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R13            ; retore Cache/TLB information (4)
+    shr   RAX,16
+    and   RAX,0xff
+    call  out_cachetlb_info
+    mov   RAX,R13            ; retore Cache/TLB information (4)
+    shr   RAX,24
+    and   RAX,0xff
+    call  out_cachetlb_info
+
+test_node2_end:
     ret
 
 out_cachetlb_info:
