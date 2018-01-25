@@ -281,6 +281,48 @@ section .rodata
     scachetlb_5a:           dw len_scachetlb_5a
                             db "  Data TLB0: 2 MByte or 4 MByte pages, 4-way set associative, 32 entries",0x0a
     len_scachetlb_5a:       equ $-scachetlb_5a
+    scachetlb_5b:           dw len_scachetlb_5b
+                            db "  Data TLB: 4 KByte and 4 MByte pages, 64 entries",0x0a
+    len_scachetlb_5b:       equ $-scachetlb_5b
+    scachetlb_5c:           dw len_scachetlb_5c
+                            db "  Data TLB: 4 KByte and 4 MByte pages,128 entries",0x0a
+    len_scachetlb_5c:       equ $-scachetlb_5c
+    scachetlb_5d:           dw len_scachetlb_5d
+                            db "  Data TLB: 4 KByte and 4 MByte pages,256 entries",0x0a
+    len_scachetlb_5d:       equ $-scachetlb_5d
+    scachetlb_60:           dw len_scachetlb_60
+                            db "  1st-level data cache: 16 KByte, 8-way set associative, 64 byte line size",0x0a
+    len_scachetlb_60:       equ $-scachetlb_60
+    scachetlb_61:           dw len_scachetlb_61
+                            db "  Instruction TLB: 4 KByte pages, fully associative, 48 entries",0x0a
+    len_scachetlb_61:       equ $-scachetlb_61
+    scachetlb_63:           dw len_scachetlb_63
+                            db "  Data TLB: 2 MByte or 4 MByte pages, 4-way set associative, 32 entries and a separate arraypages, 4-way set associative, 4 entries with 1 GByte pages, 4-way set associative, 4 entries",0x0a
+    len_scachetlb_63:       equ $-scachetlb_63
+    scachetlb_64:           dw len_scachetlb_64
+                            db "  Data TLB: 4 KByte pages, 4-way set associative, 512 entries",0x0a
+    len_scachetlb_64:       equ $-scachetlb_64
+    scachetlb_66:           dw len_scachetlb_66
+                            db "  1st-level data cache: 8 KByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_66:       equ $-scachetlb_66
+    scachetlb_67:           dw len_scachetlb_67
+                            db "  1st-level data cache: 8 KByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_67:       equ $-scachetlb_67
+    scachetlb_68:           dw len_scachetlb_68
+                            db "  1st-level data cache: 32 KByte, 4-way set associative, 64 byte line size",0x0a
+    len_scachetlb_68:       equ $-scachetlb_68
+    scachetlb_6a:           dw len_scachetlb_6a
+                            db "  uTLB: 4 KByte pages, 8-way set associative, 64 entries",0x0a
+    len_scachetlb_6a:       equ $-scachetlb_6a
+    scachetlb_6b:           dw len_scachetlb_6b
+                            db "  DTLB: 4 KByte pages, 8-way set associative, 256 entries",0x0a
+    len_scachetlb_6b:       equ $-scachetlb_6b
+    scachetlb_6c:           dw len_scachetlb_6c
+                            db "  DTLB: 2M/4M pages, 8-way set associative, 128 entries",0x0a
+    len_scachetlb_6c:       equ $-scachetlb_6c
+    scachetlb_6d:           dw len_scachetlb_6d
+                            db "  DTLB: 1 GByte pages, fully associative, 16 entries",0x0a
+    len_scachetlb_6d:       equ $-scachetlb_6d
     cachetlb_lookup:        dq scachetlb_00 ; 0x00
                             dq scachetlb_01 ; 0x01
                             dq scachetlb_02 ; 0x02
@@ -372,6 +414,27 @@ section .rodata
                             dq scachetlb_00 ; 0x58
                             dq scachetlb_59 ; 0x59
                             dq scachetlb_5a ; 0x5a
+                            dq scachetlb_5b ; 0x5b
+                            dq scachetlb_5c ; 0x5c
+                            dq scachetlb_5d ; 0x5d
+                            dq scachetlb_00 ; 0x5e
+                            dq scachetlb_00 ; 0x5f
+                            dq scachetlb_60 ; 0x60
+                            dq scachetlb_61 ; 0x61
+                            dq scachetlb_00 ; 0x62
+                            dq scachetlb_63 ; 0x63
+                            dq scachetlb_64 ; 0x64
+                            dq scachetlb_00 ; 0x65
+                            dq scachetlb_66 ; 0x66
+                            dq scachetlb_67 ; 0x67
+                            dq scachetlb_68 ; 0x68
+                            dq scachetlb_00 ; 0x69
+                            dq scachetlb_6a ; 0x6a
+                            dq scachetlb_6b ; 0x6b
+                            dq scachetlb_6c ; 0x6c
+                            dq scachetlb_6d ; 0x6d
+                            dq scachetlb_00 ; 0x6e
+                            dq scachetlb_00 ; 0x6f
     scr:                    db 0x0a
 
 section .text
