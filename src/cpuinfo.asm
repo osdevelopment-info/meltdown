@@ -818,7 +818,7 @@ section .text
     global _start
 
 ; Scratch registers (for the complete programm)
-; R12 maximum Basic CPUID Information
+; R13 short time storage
 ; R14 pointer to cpuinfo storage
 ; R15 current pointer to cpuinfo storage (increments when written)
 _start:
@@ -944,8 +944,8 @@ read_leaf4:
     cmp   EAX,4              ; check if leaf 4 is supported by CPUID
     jl    done_basic         ; if leaf 4 is not supported we're done
 
-    mov   EAX,4              ; get the leaf
     xor   RCX,RCX
+    mov   EAX,4              ; get the leaf
     mov   [R15],EAX          ; save the input values
     add   R15,4
     mov   [R15],ECX
