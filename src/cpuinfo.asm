@@ -803,6 +803,9 @@ section .rodata
     scachetlb_ff:           dw len_scachetlb_ff
                             db "  CPUID leaf 2 does not report cache descriptor information, use CPUID leaf 4 to query cache parameters",0x0a
     len_scachetlb_ff:       equ $-scachetlb_ff
+    scache:                 dw len_scache
+                            db "Cache information (EAX=0x04) (Intel):",0x0a
+    len_scache:             equ $-scache
     scr:                    db 0x0a
 
 section .text
@@ -945,6 +948,8 @@ read_leaf4:
     jl    done_basic         ; if leaf 4 is not supported we're done
 
     xor   RCX,RCX
+continue_leaf4:
+    push  RCX
     mov   EAX,4              ; get the leaf
     mov   [R15],EAX          ; save the input values
     add   R15,4
@@ -959,6 +964,11 @@ read_leaf4:
     add   R15,4
     mov   [R15],EDX
     add   R15,4
+    and   EAX,0x03           ; Mask the continuation bits
+    jz    read_leaf5
+    pop   RCX
+    inc   RCX
+    jmp   continue_leaf4
 
 read_leaf5:
 
@@ -982,8 +992,8 @@ handle_information:
     mov   RSI,svendor
     mov   RDI,output
     call  prints
-    add   R15,8
-    mov   EAX,[R15]
+    add   R15,8              ; jump over the input information
+    mov   EAX,[R15]          ; restore the cpuid information
     add   R15,4
     mov   EBX,[R15]
     add   R15,4
@@ -1011,7 +1021,7 @@ handle_information:
     je    end_handle
     cmp   EAX,1
     jne   handle_leaf2
-    add   R15,8
+    add   R15,8              ; jump over the input information
     mov   EAX,[R15]
 
     shr   EAX,8              ; get bit 8 (lsb of family) to bit 0
@@ -1113,12 +1123,40 @@ handle_leaf2:
     cmp   EAX,2
     jne   handle_leaf3
 
-    add   R15,8
     cmp   [cpu_vendor],byte 0x00 ; this is an Intel CPU
     jne   handle_leaf3
+    add   R15,8              ; jump over the input information
     call  intel_node2
 
 handle_leaf3:
+    mov   EAX,[R15]
+    cmp   EAX,0
+    je    end_handle
+    cmp   EAX,3
+    jne   handle_leaf4
+    add   R15,8              ; jump over the input information
+    mov   EAX,[R15]
+    add   R15,4
+    mov   EBX,[R15]
+    add   R15,4
+    mov   ECX,[R15]
+    add   R15,4
+    mov   EDX,[R15]
+    add   R15,4
+
+    ; TODO print the PSN
+
+handle_leaf4:
+    mov   EAX,[R15]
+    cmp   EAX,0
+    je    end_handle
+    cmp   EAX,4
+    jne   handle_leaf5
+    cmp   [cpu_vendor],byte 0x00 ; this is an Intel CPU
+    jne   handle_leaf5
+    call  intel_node4
+
+handle_leaf5:
 end_handle:
     ret
 
@@ -1544,6 +1582,12 @@ test_node2_edx:
 
 test_node2_end:
     add   R15,4
+    ret
+
+intel_node4:
+    mov   RSI,scache
+    call  prints
+
     ret
 
 out_cachetlb_info:
