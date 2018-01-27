@@ -465,10 +465,10 @@ section .rodata
                             db " rdrand"
     len_feat_rdrand:        equ $-sfeat_rdrand
     scacheline:             dw len_cacheline
-                            db "cache line size: "
+                            db 0x0a,"cache line size: "
     len_cacheline:          equ $-scacheline
     scachetlb:              dw len_scachetlb
-                            db "Cache/TLB information (EAX=0x02) (Intel):",0x0a
+                            db 0x0a,"Cache/TLB information (EAX=0x02) (Intel):",0x0a
     len_scachetlb:          equ $-scachetlb
     scachetlb_00:           dw len_scachetlb_00
                             db ""
@@ -810,7 +810,7 @@ section .rodata
                             db "  CPUID leaf 2 does not report cache descriptor information, use CPUID leaf 4 to query cache parameters",0x0a
     len_scachetlb_ff:       equ $-scachetlb_ff
     scache:                 dw len_scache
-                            db "Cache information (EAX=0x04) (Intel):",0x0a
+                            db 0x0a,"Cache information (EAX=0x04) (Intel):",0x0a
     len_scache:             equ $-scache
     scache_type:            dw len_scache_type
                             db "  Cache Type:"
@@ -830,6 +830,15 @@ section .rodata
     scache_self_init:       dw len_scache_self_init
                             db "  Self Initializing: "
     len_scache_self_init    equ $-scache_self_init
+    scache_full_assoc:      dw len_scache_full_assoc
+                            db "  Fully Associative: "
+    len_scache_full_assoc   equ $-scache_full_assoc
+    scache_logproc_share:   dw len_scache_logproc_share
+                            db "  Log. processors sharing cache: "
+    len_scache_logproc_share equ $-scache_logproc_share
+    scache_cores_pack:      dw len_scache_cores_pack
+                            db "  Cores in package: "
+    len_scache_cores_pack   equ $-scache_cores_pack
     scr:                    db 0x0a
 
 section .text
@@ -1663,11 +1672,47 @@ intel_cache_not_self_init:
     mov   RSI,scr
     movsb
 intel_cache_self_init_end:
+    mov   EAX,[R15]          ; Load EAX
+    mov   RSI,scache_full_assoc
+    call  prints
+    bt    EAX,9
+    jnc   intel_cache_not_full_assoc
+    mov   RSI,strue
+    call  prints
+    mov   RSI,scr
+    movsb
+    jmp   intel_cache_full_assoc_end
+intel_cache_not_full_assoc:
+    mov   RSI,sfalse
+    call  prints
+    mov   RSI,scr
+    movsb
+intel_cache_full_assoc_end:
+    shr   EAX,14             ; Mask number of log. processors sharing this cache
+    and   EAX,0x0fff
+    inc   EAX
+    mov   RSI,scache_logproc_share
+    call  prints
+    call  printw
+    mov   RSI,scr
+    movsb
+
+    mov   EAX,[R15]          ; Load EAX
+    shr   EAX,26             ; Mask number of cores in physical package
+    and   EAX,0x3f
+    inc   EAX
+    mov   RSI,scache_cores_pack
+    call  prints
+    call  printb
+    mov   RSI,scr
+    movsb
 
     add   R15,4
     add   R15,4
     add   R15,4
     add   R15,4
+    mov   RSI,scr
+    movsb
     jmp   intel_next_cache
 
 test_node4_end:
