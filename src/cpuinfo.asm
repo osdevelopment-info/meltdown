@@ -263,6 +263,12 @@ section .rodata
                             dq scachetlb_00 ; 0xfd
                             dq scachetlb_fe ; 0xfe
                             dq scachetlb_ff ; 0xff
+    strue:                  dw len_true
+                            db "true"
+    len_true                equ $-strue
+    sfalse:                 dw len_false
+                            db "true"
+    len_false               equ $-sfalse
     svendor:                dw len_vendor
                             db "vendor id: "
     len_vendor:             equ $-svendor
@@ -806,6 +812,24 @@ section .rodata
     scache:                 dw len_scache
                             db "Cache information (EAX=0x04) (Intel):",0x0a
     len_scache:             equ $-scache
+    scache_type:            dw len_scache_type
+                            db "  Cache Type:"
+    len_scache_type:        equ $-scache_type
+    scache_type_1:          dw len_scache_type_1
+                            db " Data Cache",0x0a
+    len_scache_type_1:      equ $-scache_type_1
+    scache_type_2:          dw len_scache_type_2
+                            db " Instrution Cache",0x0a
+    len_scache_type_2:      equ $-scache_type_2
+    scache_type_3:          dw len_scache_type_3
+                            db " Unified Cache",0x0a
+    len_scache_type_3:      equ $-scache_type_3
+    scache_level:           dw len_scache_level
+                            db "  Cache Level: "
+    len_scache_level:       equ $-scache_level
+    scache_self_init:       dw len_scache_self_init
+                            db "  Self Initializing: "
+    len_scache_self_init    equ $-scache_self_init
     scr:                    db 0x0a
 
 section .text
@@ -1588,6 +1612,65 @@ intel_node4:
     mov   RSI,scache
     call  prints
 
+intel_next_cache:
+    mov   EAX,[R15]
+    cmp   EAX,0x04
+    jne   test_node4_end
+
+    add   R15,8
+    mov   EAX,[R15]          ; Load EAX 
+    and   EAX,0x1f           ; Mask cache type
+    cmp   EAX,0x00
+    je    test_node4_end     ; No more caches
+    mov   RSI,scache_type
+    call  prints
+    cmp   EAX,0x01
+    jne   intel_test_cache_type2
+    mov   RSI,scache_type_1
+    call  prints
+    jmp   intel_test_cache_type_end
+intel_test_cache_type2:
+    cmp   EAX,0x02
+    jne   intel_test_cache_type3
+    mov   RSI,scache_type_2
+    call  prints
+    jmp   intel_test_cache_type_end
+intel_test_cache_type3:
+    mov   RSI,scache_type_3
+    call  prints
+intel_test_cache_type_end:
+    mov   EAX,[R15]          ; Load EAX
+    shr   EAX,5
+    and   EAX,0x07           ; Mask Cache Level
+    mov   RSI,scache_level
+    call  prints
+    call  printb
+    mov   RSI,scr
+    movsb
+    mov   EAX,[R15]          ; Load EAX
+    mov   RSI,scache_self_init
+    call  prints
+    bt    EAX,8
+    jnc   intel_cache_not_self_init
+    mov   RSI,strue
+    call  prints
+    mov   RSI,scr
+    movsb
+    jmp   intel_cache_self_init_end
+intel_cache_not_self_init:
+    mov   RSI,sfalse
+    call  prints
+    mov   RSI,scr
+    movsb
+intel_cache_self_init_end:
+
+    add   R15,4
+    add   R15,4
+    add   R15,4
+    add   R15,4
+    jmp   intel_next_cache
+
+test_node4_end:
     ret
 
 out_cachetlb_info:
