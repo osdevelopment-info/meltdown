@@ -1706,8 +1706,8 @@ intel_cache_full_assoc_end:
     call  printb
     mov   RSI,scr
     movsb
-
     add   R15,4
+
     add   R15,4
     add   R15,4
     add   R15,4
