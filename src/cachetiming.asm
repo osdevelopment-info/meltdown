@@ -35,9 +35,19 @@ _start:
 ;    sub   RAX,4
     mov   RCX,RAX
     mov   RDI,data           ; move address of data to RSI
+    mov   EAX,0x55aa55aa
 rand_retry:
-    rdrand EAX
-    jnc   rand_retry
+    mov   EBX,EAX
+    shl   EAX,13
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shr   EAX,17
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shl   EAX,5
+    xor   EAX,EBX
+;    rdrand EAX
+;    jnc   rand_retry
     stosd
     loop  rand_retry
 
