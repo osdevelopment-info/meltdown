@@ -20,6 +20,7 @@ section .rodata
 section .text
     extern printqw
     extern printw
+    extern printb
     global _start
 
 _start:
@@ -41,7 +42,7 @@ rand_retry_data:              ; create a pseudo random number for data
     loop  rand_retry_data
 
     mov   RAX,4096
-    mov   RBX,256
+    mov   RBX,257
     mul   RBX
     shr   RAX,2
     mov   RCX,RAX
@@ -60,25 +61,39 @@ rand_retry_probe:             ; create a pseudo random number for probe
     stosd                     ; store the value into the data array
     loop  rand_retry_probe
 
-    mov   RCX,256             ; counter for clearing the cache
+    mov   RCX,257             ; counter for clearing the cache
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
-    mov   RDI,data            ; move address of data to RDI
     mov   RBX,4096            ; size of the pages
     xor   RDX,RDX             ; offset into the probe array
+    mov   RDI,data
 start_clflush:
     clflush [RSI+RDX]         ; clear the cache
     add   RDX,RBX
     loop  start_clflush
 
-    mov   RDI,data
     xor   RAX,RAX
     xor   RBX,RBX
     mov   AL,[RDI]
     mov   BX,4096
     mul   RBX
+    add   RAX,RBX
     mov   BL,[RSI+RAX]
 
     call  determine_cache_hit
+
+    mov   RDI,data
+    mov   AL,[RDI]
+    mov   RDI,print_area
+    call  printb
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,print_area
+    syscall
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
 
     mov   RCX,256
 simple_out:
@@ -98,11 +113,13 @@ simple_out:
     mov   RSI,print_area
     syscall
     mov   RDI,print_area
-    pop   RCX
-    push  RCX
+    pop   RAX
+    push  RAX
+    dec   RAX
+;    inc   RAX
     mov   RSI,analyse
-    mov   RAX,[RSI+RCX*8]
-    call printqw
+    mov   RAX,[RSI+RAX*8]
+    call  printqw
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
@@ -147,11 +164,13 @@ next_analyse:
     rdtsc                     ; get the time stamp counter
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
-    mov   R14,RAX
+;    mov   R14,RAX
+    sub   RAX,R15
+    stosq
 
-    sub   R14,R15
-    mov   [RDI],R14
-    add   RDI,8
+;    sub   R14,R15
+;    mov   [RDI],R14
+;    add   RDI,8
     loop  next_analyse
 
     ret
