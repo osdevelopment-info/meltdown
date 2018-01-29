@@ -25,9 +25,9 @@ section .text
 _start:
     mov   RCX,1024            ; fill the data array with random data
     shr   RCX,2               ; divide by 4 (because we use a 32bit PRNG)
-    mov   RDI,data            ; move address of data to RSI
+    mov   RDI,data            ; move address of data to RDI
     mov   EAX,0x55aa55aa      ; initialize the PRNG with a seed
-rand_retry:                   ; create a pseudo random number
+rand_retry_data:              ; create a pseudo random number for data
     mov   EBX,EAX
     shl   EAX,13
     xor   EAX,EBX
@@ -38,14 +38,35 @@ rand_retry:                   ; create a pseudo random number
     shl   EAX,5
     xor   EAX,EBX
     stosd                     ; store the value into the data array
-    loop  rand_retry
+    loop  rand_retry_data
+
+    mov   RAX,4096
+    mov   RBX,256
+    mul   RBX
+    shr   RAX,2
+    mov   RCX,RAX
+    mov   RDI,probe           ; move address of probe array to RDI
+    mov   EAX,0x55aa55aa
+rand_retry_probe:             ; create a pseudo random number for probe
+    mov   EBX,EAX
+    shl   EAX,13
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shr   EAX,17
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shl   EAX,5
+    xor   EAX,EBX
+    stosd                     ; store the value into the data array
+    loop  rand_retry_probe
 
     mov   RCX,256             ; counter for clearing the cache
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
+    mov   RDI,data            ; move address of data to RDI
     mov   RBX,4096            ; size of the pages
     xor   RDX,RDX             ; offset into the probe array
 start_clflush:
-    clflush [RDI+RDX]         ; clear the cache
+    clflush [RSI+RDX]         ; clear the cache
     add   RDX,RBX
     loop  start_clflush
 
@@ -55,7 +76,7 @@ start_clflush:
     mov   AL,[RDI]
     mov   BX,4096
     mul   RBX
-    mov   BL,[RDI+RAX]
+    mov   BL,[RSI+RAX]
 
     call  determine_cache_hit
 
@@ -67,11 +88,11 @@ simple_out:
     call  printw
     mov   AL,':'
     stosb
+    inc   RDX
     mov   AL,' '
     stosb
+    inc   RDX
     push  RCX
-    inc   RDX
-    inc   RDX
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
@@ -127,9 +148,6 @@ next_analyse:
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
     mov   R14,RAX
-    mov   RAX,RBX
-    mul   RCX
-    mov   RDX,[RSI+RAX]
 
     sub   R14,R15
     mov   [RDI],R14
