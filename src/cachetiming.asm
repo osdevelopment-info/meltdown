@@ -307,24 +307,24 @@ _end:
 time_calc:
     lfence
     rdtsc                    ; get the time stamp counter
-;    shl   RDX,32             ; mov EDX to the high double word
-;    add   RAX,RDX            ; add it to the low double word
+    shl   RDX,32             ; mov EDX to the high double word
+    add   RAX,RDX            ; add it to the low double word
     mov   R15,RAX            ; save the value to R15
 
     mov   RCX,[RSI]          ; load data from the probe array
 
     lfence
     rdtsc                    ; get the time stamp counter
-;    shl   RDX,32             ; mov EDX to the high double word
-;    add   RAX,RDX            ; add it to the low double word
+    shl   RDX,32             ; mov EDX to the high double word
+    add   RAX,RDX            ; add it to the low double word
     mov   R14,RAX            ; save the value to R14
 
     mov   RCX,[RSI+RBX]      ; load data from the probe array
 
     lfence
     rdtsc                    ; get the time stamp counter
-;    shl   RDX,32             ; mov EDX to the high double word
-;    add   RAX,RDX            ; add it to the low double word
+    shl   RDX,32             ; mov EDX to the high double word
+    add   RAX,RDX            ; add it to the low double word
     mov   R13,RAX            ; save the value to R13
 
     ret
