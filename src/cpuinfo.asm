@@ -839,6 +839,24 @@ section .rodata
     scache_cores_pack:      dw len_scache_cores_pack
                             db "  Cores in package: "
     len_scache_cores_pack   equ $-scache_cores_pack
+    scache_coherency_size:  dw len_scache_coherency_size
+                            db "  System coherency line size: "
+    len_scache_coherency_size equ $-scache_coherency_size
+    scache_phys_line_part:  dw len_scache_phys_line_part
+                            db "  Physical line partitions: "
+    len_scache_phys_line_part equ $-scache_phys_line_part
+    scache_ways_assoc:      dw len_scache_ways_assoc
+                            db "  Ways of associativity: "
+    len_scache_ways_assoc   equ $-scache_ways_assoc
+    scache_nr_sets:         dw len_scache_nr_sets
+                            db "  Number of sets: "
+    len_scache_nr_sets      equ $-scache_nr_sets
+    scache_size:            dw len_scache_size
+                            db "  Cache size (B): "
+    len_scache_size         equ $-scache_size
+    scache_size_kb:         dw len_scache_size_kb
+                            db "  Cache size (KiB): "
+    len_scache_size_kb      equ $-scache_size_kb
     scr:                    db 0x0a
 
 section .text
@@ -1708,8 +1726,83 @@ intel_cache_full_assoc_end:
     movsb
     add   R15,4
 
+    mov   EAX,[R15]          ; Load EBX
+    and   EAX,0x0fff         ; Mask system coherency line size
+    inc   EAX
+    mov   EBX,EAX
+    mov   RSI,scache_coherency_size
+    call  prints
+    call  printw
+    mov   RSI,scr
+    movsb
+    mov   EAX,[R15]          ; Load EBX
+    shr   EAX,12
+    and   EAX,0x03ff         ; Mask physical line partitions
+    inc   EAX
+    mov   ECX,EAX
+    mul   EBX
+    mov   EBX,EDX
+    shl   RBX,32
+    mov   EBX,EAX
+    mov   EAX,ECX
+    mov   RSI,scache_phys_line_part
+    call  prints
+    call  printw
+    mov   RSI,scr
+    movsb
+    xor   RAX,RAX
+    mov   EAX,[R15]          ; Load EBX
+    shr   EAX,22
+    and   EAX,0x03ff         ; Mask ways of associativity
+    inc   EAX
+    mov   ECX,EAX
+    mul   RBX
+    mov   RBX,RAX
+    mov   EAX,ECX
+    mov   RSI,scache_ways_assoc
+    call  prints
+    call  printw
+    mov   RSI,scr
+    movsb
     add   R15,4
+
+    xor   RAX,RAX
+    mov   EAX,[R15]          ; Load ECX
+    inc   EAX
+    mov   ECX,EAX
+    mul   RBX
+    mov   RBX,RAX
+    mov   EAX,ECX
+    mov   RSI,scache_nr_sets
+    call  prints
+    call  printw
+    mov   RSI,scr
+    movsb
     add   R15,4
+
+    mov   RAX,RBX
+    mov   RSI,scache_size
+    call  prints
+    call  printqw
+    mov   RSI,scr
+    movsb
+
+    mov   RSI,scache_size_kb
+    call  prints
+    mov   RAX,RBX
+    shr   RAX,10
+    call  printqw
+    mov   RAX,RBX
+    and   RAX,0x03ff
+    jz    done_cache_kb
+    mov   AL,'.'
+    stosb
+    stosb
+    stosb
+done_cache_kb:
+    mov   RSI,scr
+    movsb
+
     add   R15,4
     mov   RSI,scr
     movsb
