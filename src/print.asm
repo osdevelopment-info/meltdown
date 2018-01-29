@@ -52,6 +52,7 @@ printqw:
     cld
     push RCX         ; save RCX for restore
     push RAX         ; save RAX for restore
+    push RSI         ; save RSI for restore
     push RDI         ; save RDI for later usage
     mov  RDI,scratch
     mov  RCX,10      ; move the divisor to RCX
@@ -83,6 +84,7 @@ reverse:
     dec  RSI         ; adjust the pointers
     inc  RDI
     loop reverse
+    pop  RSI         ; restore RSI
     pop  RAX         ; restore RAX
     pop  RCX         ; restore RCX
     popfq
