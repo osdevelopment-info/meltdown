@@ -9,7 +9,7 @@ clean:
 	rm -rf bin
 	rm -rf build
 
-all: prepare cpuinfo sighandler sigretry cachetiming
+all: prepare cpuinfo sighandler sigretry cachetiming cacheread
 
 prepare:
 	mkdir -p bin
@@ -30,6 +30,9 @@ sigretry.o:
 cachetiming.o:
 	$(NASM) $(NASM_OPTS) src/cachetiming.asm -l build/cachetiming.lst -o build/cachetiming.o
 
+cacheread.o:
+	$(NASM) $(NASM_OPTS) src/cacheread.asm -l build/cacheread.lst -o build/cacheread.o
+
 cpuinfo: print.o cpuinfo.o
 	$(LD) $(LD_OPTS) -o bin/cpuinfo build/cpuinfo.o build/print.o
 
@@ -41,3 +44,6 @@ sigretry: print.o sigretry.o
 
 cachetiming: print.o cachetiming.o
 	$(LD) $(LD_OPTS) -o bin/cachetiming build/cachetiming.o build/print.o
+
+cacheread: print.o cacheread.o
+	$(LD) $(LD_OPTS) -o bin/cacheread build/cacheread.o build/print.o
