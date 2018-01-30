@@ -15,10 +15,14 @@ section .rodata
     sdata_read:     dw len_sdata_read
                     db "Data read: "
     len_sdata_read: equ $-sdata_read
+    spossible:      dw len_spossible
+                    db "Possible data: ",0x0a
+    len_spossible:  equ $-spossible
     scr:            db 0x0a
     page_size:      equ 4096            ; page size (must be a power of 2)
 
 section .text
+    extern prints
     extern printqw
     extern printw
     extern printb
@@ -175,12 +179,47 @@ no_new_min:
     mov   RAX,R15
     add   RAX,R14
     shr   RAX,1
+    mov   R13,RAX
     mov   RDI,print_area
     call  printqw
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
     syscall
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+
+    mov   RSI,spossible
+    mov   RDI,print_area
+    call  prints
+    mov   RDX,RDI
+    mov   RSI,print_area
+    sub   RDX,RSI
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    syscall
+
+    xor   RCX,RCX
+    mov   RSI,analyse
+search_hit:
+    mov   RAX,[RSI+8*RCX]
+    cmp   RAX,R13
+    jge   no_hit
+    mov   RAX,RCX
+    mov   RDI,print_area
+    call  printhb
+    mov   RDX,2
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,print_area
+    syscall
+no_hit:
+    inc   RCX
+    cmp   RCX,256
+    jl    search_hit
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,scr
@@ -211,11 +250,9 @@ next_analyse:
     mov   R15,RAX
     mov   RAX,RCX
     mov   RDX,RCX
-;    mov   R14,page_size
     tzcnt RCX,RBX
     shl   RAX,CL              ; multiply with the page size
     mov   RCX,RDX
-;    shl   RAX,12              ; multiply with 4096 (page size)
     mov   DL,[RSI+RAX]
 
     lfence
