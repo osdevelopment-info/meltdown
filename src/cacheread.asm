@@ -16,11 +16,13 @@ section .rodata
                     db "Data read: "
     len_sdata_read: equ $-sdata_read
     scr:            db 0x0a
+    page_size:      equ 4096            ; page size (must be a power of 2)
 
 section .text
     extern printqw
     extern printw
     extern printb
+    extern printhb
     global _start
 
 _start:
@@ -41,7 +43,7 @@ rand_retry_data:              ; create a pseudo random number for data
     stosd                     ; store the value into the data array
     loop  rand_retry_data
 
-    mov   RAX,4096
+    mov   RAX,page_size
     mov   RBX,257
     mul   RBX
     shr   RAX,2
@@ -63,31 +65,33 @@ rand_retry_probe:             ; create a pseudo random number for probe
 
     mov   RCX,257             ; counter for clearing the cache
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
-    mov   RBX,4096            ; size of the pages
+    mov   RBX,page_size       ; size of the pages
     xor   RDX,RDX             ; offset into the probe array
-    mov   RDI,data
 start_clflush:
     clflush [RSI+RDX]         ; clear the cache
     add   RDX,RBX
     loop  start_clflush
 
+cache_data:                   ; this section reads a byte into the cache
+    mov   RDI,data
     xor   RAX,RAX
     xor   RBX,RBX
     mov   AL,[RDI]
-    mov   BX,4096
-    mul   RBX
-    add   RAX,RBX
+    mov   R15,page_size
+    tzcnt RCX,R15
+    shl   RAX,CL              ; multiply with the page size
     mov   BL,[RSI+RAX]
 
-    call  determine_cache_hit
+    call  determine_cache_hit ; determines the cache access times
 
     mov   RDI,data
     mov   AL,[RDI]
     mov   RDI,print_area
-    call  printb
+    call  printhb
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
+    mov   RDX,2
     syscall
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
@@ -95,12 +99,15 @@ start_clflush:
     mov   RDX,1
     syscall
 
-    mov   RCX,256
+    xor   RAX,RAX
+    xor   RCX,RCX
+    xor   R15,R15
+    mov   R14,0x7fffffffffffffff
 simple_out:
     mov   RAX,RCX
-    dec   RAX
     mov   RDI,print_area
-    call  printw
+    call  printhb
+    mov   RDX,2
     mov   AL,':'
     stosb
     inc   RDX
@@ -115,10 +122,13 @@ simple_out:
     mov   RDI,print_area
     pop   RAX
     push  RAX
-    dec   RAX
-;    inc   RAX
     mov   RSI,analyse
     mov   RAX,[RSI+RAX*8]
+    add   R15,RAX
+    cmp   R14,RAX
+    jl    no_new_min
+    mov   R14,RAX
+no_new_min:
     call  printqw
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
@@ -130,8 +140,52 @@ simple_out:
     mov   RDX,1
     syscall
     pop   RCX
-    dec   RCX
-    jnz   simple_out
+    inc   RCX
+    cmp   RCX,256
+    jl    simple_out
+
+    mov   RAX,R15             ; print out avg
+    shr   RAX,8
+    mov   R15,RAX
+    mov   RDI,print_area
+    call  printqw
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,print_area
+    syscall
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+
+    mov   RAX,R14             ; print out min
+    mov   RDI,print_area
+    call  printqw
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,print_area
+    syscall
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
+
+    mov   RAX,R15
+    add   RAX,R14
+    shr   RAX,1
+    mov   RDI,print_area
+    call  printqw
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,print_area
+    syscall
+    mov   RAX,1               ; sys write
+    mov   RDI,1               ; stdout
+    mov   RSI,scr
+    mov   RDX,1
+    syscall
 
 _end:
     mov   RAX,1               ; sys write
@@ -147,30 +201,32 @@ _end:
 determine_cache_hit:
     mov   RSI,probe
     mov   RDI,analyse         ; load address of the analyse array
-    mov   RBX,4096            ; size of the pages
-    mov   RCX,256
+    mov   RBX,page_size       ; size of the pages
+    xor   RCX,RCX
 next_analyse:
     lfence
     rdtsc                     ; get the time stamp counter
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
     mov   R15,RAX
-    mov   RAX,RBX
-    mul   RCX
-    sub   RAX,RBX
-    mov   RDX,[RSI+RAX]
+    mov   RAX,RCX
+    mov   RDX,RCX
+;    mov   R14,page_size
+    tzcnt RCX,RBX
+    shl   RAX,CL              ; multiply with the page size
+    mov   RCX,RDX
+;    shl   RAX,12              ; multiply with 4096 (page size)
+    mov   DL,[RSI+RAX]
 
     lfence
     rdtsc                     ; get the time stamp counter
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
-;    mov   R14,RAX
     sub   RAX,R15
     stosq
 
-;    sub   R14,R15
-;    mov   [RDI],R14
-;    add   RDI,8
-    loop  next_analyse
+    inc   RCX
+    cmp   RCX,256
+    jl    next_analyse
 
     ret
