@@ -1,12 +1,15 @@
 bits 64
 
+    data_size:      equ 1024            ; data array size
+    page_size:      equ 4096            ; page size (must be a power of 2)
+
 section .bss
-    data:           resb 1024           ; the array to read
-    read_data:      resb 1024           ; the array with the read data
+    data:           resb data_size      ; the array to read
+    read_data:      resb data_size      ; the array with the read data
     analyse:        resq 256            ; the analyse times
     print_area:     resb 65536          ; space for prepare printing
-    align 4096
-    probe:          times 257 resb 4096 ; the probe array
+    align page_size
+    probe:          times 256 resb page_size ; the probe array
 
 section .rodata
     sdata:          dw len_sdata
@@ -19,7 +22,6 @@ section .rodata
                     db "Possible data: ",0x0a
     len_spossible:  equ $-spossible
     scr:            db 0x0a
-    page_size:      equ 4096            ; page size (must be a power of 2)
 
 section .text
     extern prints
@@ -30,10 +32,11 @@ section .text
     global _start
 
 _start:
-    mov   RCX,1024            ; fill the data array with random data
+; initialize the data are with some random data
+    mov   RCX,data_size
     shr   RCX,2               ; divide by 4 (because we use a 32bit PRNG)
     mov   RDI,data            ; move address of data to RDI
-    mov   EAX,0x55aa55aa      ; initialize the PRNG with a seed
+    rdtsc                     ; initialize the PRNG with a seed
 rand_retry_data:              ; create a pseudo random number for data
     mov   EBX,EAX
     shl   EAX,13
@@ -47,13 +50,16 @@ rand_retry_data:              ; create a pseudo random number for data
     stosd                     ; store the value into the data array
     loop  rand_retry_data
 
+; initialize the probe array with some data
+; this is needed because an empty probe array leads to unreliable cache timing 
     mov   RAX,page_size
-    mov   RBX,257
-    mul   RBX
-    shr   RAX,2
+    mov   RBX,256
+    mul   RBX                 ; the number f bytes the probe array has
+    shr   RAX,2               ; divide by 4 (because we use a 32bit PRNG)
     mov   RCX,RAX
     mov   RDI,probe           ; move address of probe array to RDI
-    mov   EAX,0x55aa55aa
+    xor   RAX,RAX
+    mov   EAX,0x55aa55aa      ; initialize the PRNG with a seed
 rand_retry_probe:             ; create a pseudo random number for probe
     mov   EBX,EAX
     shl   EAX,13
@@ -67,7 +73,7 @@ rand_retry_probe:             ; create a pseudo random number for probe
     stosd                     ; store the value into the data array
     loop  rand_retry_probe
 
-    mov   RCX,257             ; counter for clearing the cache
+    mov   RCX,256             ; counter for clearing the cache
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
     mov   RBX,page_size       ; size of the pages
     xor   RDX,RDX             ; offset into the probe array
@@ -80,15 +86,15 @@ cache_data:                   ; this section reads a byte into the cache
     mov   RDI,data
     xor   RAX,RAX
     xor   RBX,RBX
-    mov   AL,[RDI]
+    mov   AL,[RDI]            ; load the data (used as offset into the probe array)
     mov   R15,page_size
     tzcnt RCX,R15
     shl   RAX,CL              ; multiply with the page size
-    mov   BL,[RSI+RAX]
+    mov   BL,[RSI+RAX]        ; load the data from the probe array (to cache this data)
 
     call  determine_cache_hit ; determines the cache access times
 
-    mov   RDI,data
+    mov   RDI,data            ; output the real data (for reference)
     mov   AL,[RDI]
     mov   RDI,print_area
     call  printhb
