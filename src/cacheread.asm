@@ -4,12 +4,13 @@ bits 64
     page_size:      equ 4096            ; page size (must be a power of 2)
 
 section .bss
-    data:           resb data_size      ; the array to read
-    read_data:      resb data_size      ; the array with the read data
-    analyse:        resq 256            ; the analyse times
-    print_area:     resb 65536          ; space for prepare printing
     align page_size
     probe:          times 256 resb page_size ; the probe array
+    data:           resb data_size      ; the array to read
+    read_data:      resb data_size      ; the array with the read data
+    read_status:    resb data_size      ; the array with the status of the read data
+    analyse:        resq 256            ; the analyse times
+    print_area:     resb 65536          ; space for prepare printing
 
 section .rodata
     sdata:          dw len_sdata
@@ -73,29 +74,16 @@ rand_retry_probe:             ; create a pseudo random number for probe
     stosd                     ; store the value into the data array
     loop  rand_retry_probe
 
-    mov   RCX,256             ; counter for clearing the cache
-    mov   RSI,probe           ; base address of the probe array (to clear from cache)
     mov   RBX,page_size       ; size of the pages
-    xor   RDX,RDX             ; offset into the probe array
-start_clflush:
-    clflush [RSI+RDX]         ; clear the cache
-    add   RDX,RBX
-    loop  start_clflush
+    mov   RSI,probe           ; base address of the probe array (to clear from cache)
+    call  clear_cache
 
-cache_data:                   ; this section reads a byte into the cache
     mov   RDI,data
-    xor   RAX,RAX
-    xor   RBX,RBX
-    mov   AL,[RDI]            ; load the data (used as offset into the probe array)
-    mov   R15,page_size
-    tzcnt RCX,R15
-    shl   RAX,CL              ; multiply with the page size
-    mov   BL,[RSI+RAX]        ; load the data from the probe array (to cache this data)
+    call  cache_data
 
-    call  determine_cache_hit ; determines the cache access times
+    mov   RDI,analyse         ; load address of the analyse array
+    call  determine_cache_times ; determines the cache access times
 
-    mov   RDI,data            ; output the real data (for reference)
-    mov   AL,[RDI]
     mov   RDI,print_area
     call  printhb
     mov   RAX,1               ; sys write
@@ -247,10 +235,68 @@ _end:
     mov   RAX,60              ; sys exit
     syscall
 
-determine_cache_hit:
-    mov   RSI,probe
-    mov   RDI,analyse         ; load address of the analyse array
-    mov   RBX,page_size       ; size of the pages
+; Read data from a probe array. The page in the probe array is determined by
+; the data read from the data array.
+; - in
+; RBX: the page size to use. Must be a power of 2.
+; RSI: address of the probe array. This array must be at least 256 times the
+; page size.
+; RDI: address of the data to use as index in the probe array
+; - out
+; AL: the byte read from the data used as offset to the probe array (the rest of
+;     RAX is cleared)
+cache_data:
+    push  RBX
+    push  RCX
+    push  R15
+    tzcnt RCX,RBX
+    xor   RAX,RAX
+    mov   AL,[RDI]            ; load the data (used as offset into the probe array)
+    mov   R15,RAX
+    shl   RAX,CL              ; multiply with the page size
+    mov   BL,[RSI+RAX]        ; load the data from the probe array (to cache this data)
+    mov   RAX,R15
+
+    pop   R15
+    pop   RCX
+    pop   RBX
+    ret
+
+; Clear the cache
+; - in
+; RBX: the page size to use. Must be a power of 2.
+; RSI: address of the probe array. Must be page aligned and have 256 times the
+;      page size space. Should be initialized with some random data.
+clear_cache:
+    push  RCX
+    push  RDX
+    mov   RCX,256             ; counter for clearing the cache
+    xor   RDX,RDX             ; offset into the probe array
+start_clflush:
+    clflush [RSI+RDX]         ; clear the cache
+    add   RDX,RBX
+    loop  start_clflush
+
+    pop   RDX
+    pop   RCX
+    ret
+
+; Determine the cache access times (in cycles) and place them for each byte
+; offset in an array
+; - in
+; RBX: the page size to use. Must be a power of 2.
+; RSI: address of the probe array. Must be page aligned and have 256 times the
+;      page size space. Should be initialized with some random data.
+; RDI: address of the results array. Must be large enough to hold 256 quad words
+; - out
+; no registers
+determine_cache_times:
+    push  RAX
+    push  RBX
+    push  RCX
+    push  RDX
+    push  R8
+    push  R9
     tzcnt RCX,RBX
     xor   RBX,RBX             ; RBX is used as counter
 next_analyse:
@@ -274,4 +320,10 @@ next_analyse:
     cmp   RBX,256
     jl    next_analyse
 
+    pop   R9
+    pop   R8
+    pop   RDX
+    pop   RCX
+    pop   RBX
+    pop   RAX
     ret
