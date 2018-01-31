@@ -6,13 +6,23 @@ bits 64
 section .bss
     align page_size
     probe:          times 256 resb page_size ; the probe array
+    analyse:        resq 256            ; the analyse times
+    sort_area:      resq 256            ; a sort area
     data:           resb data_size      ; the array to read
     read_data:      resb data_size      ; the array with the read data
     read_status:    resb data_size      ; the array with the status of the read data
-    analyse:        resq 256            ; the analyse times
     print_area:     resb 65536          ; space for prepare printing
 
 section .rodata
+    savg:           dw len_savg
+                    db "Avg access time: "
+    len_savg:       equ $-savg
+    smin:           dw len_smin
+                    db "Min access time: "
+    len_smin:       equ $-smin
+    sthres:         dw len_sthres
+                    db "Threshold: "
+    len_sthres:     equ $-sthres
     sdata:          dw len_sdata
                     db "Data: "
     len_sdata:      equ $-sdata
@@ -71,93 +81,53 @@ _start:
     mov   RDX,1
     syscall
 
-    xor   RAX,RAX
-    xor   RCX,RCX
-    xor   R15,R15
-    mov   R14,0x7fffffffffffffff
-simple_out:
-    mov   RAX,RCX
-    mov   RDI,print_area
-    call  printhb
-    mov   RDX,2
-    mov   AL,':'
-    stosb
-    inc   RDX
-    mov   AL,' '
-    stosb
-    inc   RDX
-    push  RCX
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
-    mov   RSI,print_area
-    syscall
-    mov   RDI,print_area
-    pop   RAX
-    push  RAX
     mov   RSI,analyse
-    mov   RAX,[RSI+RAX*8]
-    add   R15,RAX
-    cmp   R14,RAX
-    jl    no_new_min
-    mov   R14,RAX
-no_new_min:
-    call  printqw
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
-    mov   RSI,print_area
-    syscall
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
-    mov   RSI,scr
-    mov   RDX,1
-    syscall
-    pop   RCX
-    inc   RCX
-    cmp   RCX,256
-    jl    simple_out
+    call  analyse_access
 
-    mov   RAX,R15             ; print out avg
-    shr   RAX,8
-    mov   R15,RAX
+    ; helping output...
     mov   RDI,print_area
+    mov   RSI,savg
+    call  prints
+    mov   RAX,R15
     call  printqw
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
+    mov   AL,[scr]
+    stosb
+    mov   RDX,RDI
     mov   RSI,print_area
-    syscall
+    sub   RDX,RSI
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
-    mov   RSI,scr
-    mov   RDX,1
     syscall
 
-    mov   RAX,R14             ; print out min
     mov   RDI,print_area
+    mov   RSI,smin
+    call  prints
+    mov   RAX,R14
     call  printqw
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
+    mov   AL,[scr]
+    stosb
+    mov   RDX,RDI
     mov   RSI,print_area
-    syscall
+    sub   RDX,RSI
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
-    mov   RSI,scr
-    mov   RDX,1
     syscall
 
+    mov   RDI,print_area
+    mov   RSI,sthres
+    call  prints
     mov   RAX,R15
     add   RAX,R14
     shr   RAX,1
     mov   R13,RAX
-    mov   RDI,print_area
     call  printqw
-    mov   RAX,1               ; sys write
-    mov   RDI,1               ; stdout
+    mov   AL,[scr]
+    stosb
+    mov   RDX,RDI
     mov   RSI,print_area
-    syscall
+    sub   RDX,RSI
     mov   RAX,1               ; sys write
     mov   RDI,1               ; stdout
-    mov   RSI,scr
-    mov   RDX,1
     syscall
 
     mov   RSI,spossible
@@ -332,4 +302,38 @@ next_analyse:
     pop   RCX
     pop   RBX
     pop   RAX
+    ret
+
+; Analyse cache timing data.
+; - in
+; RSI: Address of the analysis data. The array is expected to contain 256 quad
+;      word values (2 KiB).
+; - out
+; RSI: Address of the first byte after the array with analysis data.
+; R14: Minimum of the access times.
+; R15: Average access time to the cache.
+analyse_access:
+    pushfq
+    push  RAX
+    push  RCX
+
+    cld
+    xor   RCX,RCX
+    mov   R14,0x7fffffffffffffff
+    xor   R15,R15
+next_value:
+    lodsq
+    add   R15,RAX
+    cmp   R14,RAX
+    jl    no_new_min1
+    mov   R14,RAX
+no_new_min1:
+    inc   RCX
+    cmp   RCX,256
+    jl    next_value
+    shr   R15,8
+
+    pop   RCX
+    pop   RAX
+    popfq
     ret
