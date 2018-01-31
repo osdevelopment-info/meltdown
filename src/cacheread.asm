@@ -35,44 +35,18 @@ section .text
 _start:
 ; initialize the data are with some random data
     mov   RCX,data_size
-    shr   RCX,2               ; divide by 4 (because we use a 32bit PRNG)
     mov   RDI,data            ; move address of data to RDI
     rdtsc                     ; initialize the PRNG with a seed
-rand_retry_data:              ; create a pseudo random number for data
-    mov   EBX,EAX
-    shl   EAX,13
-    xor   EAX,EBX
-    mov   EBX,EAX
-    shr   EAX,17
-    xor   EAX,EBX
-    mov   EBX,EAX
-    shl   EAX,5
-    xor   EAX,EBX
-    stosd                     ; store the value into the data array
-    loop  rand_retry_data
+    call  random_fill
 
 ; initialize the probe array with some data
 ; this is needed because an empty probe array leads to unreliable cache timing 
     mov   RAX,page_size
     mov   RBX,256
     mul   RBX                 ; the number f bytes the probe array has
-    shr   RAX,2               ; divide by 4 (because we use a 32bit PRNG)
     mov   RCX,RAX
     mov   RDI,probe           ; move address of probe array to RDI
-    xor   RAX,RAX
-    mov   EAX,0x55aa55aa      ; initialize the PRNG with a seed
-rand_retry_probe:             ; create a pseudo random number for probe
-    mov   EBX,EAX
-    shl   EAX,13
-    xor   EAX,EBX
-    mov   EBX,EAX
-    shr   EAX,17
-    xor   EAX,EBX
-    mov   EBX,EAX
-    shl   EAX,5
-    xor   EAX,EBX
-    stosd                     ; store the value into the data array
-    loop  rand_retry_probe
+    call  random_fill
 
     mov   RBX,page_size       ; size of the pages
     mov   RSI,probe           ; base address of the probe array (to clear from cache)
@@ -235,6 +209,57 @@ _end:
     mov   RAX,60              ; sys exit
     syscall
 
+; Fill an array with (pseudo) random data. The generated data is NOT
+; cryptographically secure. The arrays size should be a multiple of 4 because
+; the PRNG puts 32bit data into the array.
+; - in
+; EAX: a seed for the PRNG
+; RCX: number of bytes to fill (should be a multiple of 4)
+; RDI: address of the array to fill
+; - out
+; EAX: internal state of the PRNG after filling the array. Can be used as seed
+;      for the next call.
+; RDI: the first address after the filled array
+random_fill:
+    push  RBX
+    push  RCX
+    shr   RCX,2               ; divide by 4 (because we use a 32bit PRNG)
+next_fill:
+    mov   EBX,EAX
+    shl   EAX,13
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shr   EAX,17
+    xor   EAX,EBX
+    mov   EBX,EAX
+    shl   EAX,5
+    xor   EAX,EBX
+    stosd                     ; store the value into the data array
+    loop  next_fill
+
+    pop   RCX
+    pop   RBX
+    ret
+
+; Clear the cache
+; - in
+; RBX: the page size to use. Must be a power of 2.
+; RSI: address of the probe array. Must be page aligned and have 256 times the
+;      page size space. Should be initialized with some random data.
+clear_cache:
+    push  RCX
+    push  RDX
+    mov   RCX,256             ; counter for clearing the cache
+    xor   RDX,RDX             ; offset into the probe array
+start_clflush:
+    clflush [RSI+RDX]         ; clear the cache
+    add   RDX,RBX
+    loop  start_clflush
+
+    pop   RDX
+    pop   RCX
+    ret
+
 ; Read data from a probe array. The page in the probe array is determined by
 ; the data read from the data array.
 ; - in
@@ -260,25 +285,6 @@ cache_data:
     pop   R15
     pop   RCX
     pop   RBX
-    ret
-
-; Clear the cache
-; - in
-; RBX: the page size to use. Must be a power of 2.
-; RSI: address of the probe array. Must be page aligned and have 256 times the
-;      page size space. Should be initialized with some random data.
-clear_cache:
-    push  RCX
-    push  RDX
-    mov   RCX,256             ; counter for clearing the cache
-    xor   RDX,RDX             ; offset into the probe array
-start_clflush:
-    clflush [RSI+RDX]         ; clear the cache
-    add   RDX,RBX
-    loop  start_clflush
-
-    pop   RDX
-    pop   RCX
     ret
 
 ; Determine the cache access times (in cycles) and place them for each byte
