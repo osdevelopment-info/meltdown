@@ -43,6 +43,8 @@ section .text
     global _start
 
 _start:
+    mov   RAX,[RSP]           ; get argc
+
 ; initialize the data are with some random data
     mov   RCX,data_size
     mov   RDI,data            ; move address of data to RDI
