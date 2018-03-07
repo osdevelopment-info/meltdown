@@ -56,7 +56,7 @@ section .bss
      data:     times 257 resb 4096
 @
 
-\chapter{Read Array via Cache Access Time}
+\section{Read Array via Cache Access Time}
 
 TBD
 
