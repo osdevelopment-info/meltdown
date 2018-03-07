@@ -13,7 +13,7 @@ pipeline {
         }
         stage('Pdf') {
             steps {
-                sh script: 'xelatex -v'
+                sh script: 'make pdf'
             }
         }
     }
