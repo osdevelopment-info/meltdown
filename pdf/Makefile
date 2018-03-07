@@ -9,6 +9,7 @@ all:
 
 clean:
 	rm *.aux
+	rm *.defs
 	rm *.log
 	rm *.out
 	rm *.tex

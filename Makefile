@@ -16,6 +16,8 @@ build: Meltdown-Spectre.nw
 	make -C asm
 
 clean:
+	make -C pdf clean
+	make -C asm clean
 	rm -rf bin
 	rm -rf build
 

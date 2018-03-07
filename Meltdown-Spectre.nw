@@ -58,6 +58,12 @@ section .bss
 
 TBD
 
+\chapter{Handling Signals}
+
+\section{Detecting Signals}
+
+TBD
+
 \chapter{Utilities}
 
 \section{Introduction}
