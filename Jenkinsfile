@@ -19,5 +19,10 @@ pipeline {
         sh script: 'make pdf'
       }
     }
+    stage('Archive') {
+      steps {
+        archiveArtifacts 'Meltdown-Spectre.pdf'
+      }
+    }
   }
 }
