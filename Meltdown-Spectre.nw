@@ -28,6 +28,8 @@ bits 64
      global _start
 @
 
+\chapter{Cache Access Timing}
+
 \chapter{Detect Cache Access Time}
 
 TBD
