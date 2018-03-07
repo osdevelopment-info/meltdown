@@ -1,17 +1,17 @@
 pipeline {
   agent any
   stages {
+  	stage('Clean') {
+      steps {
+        deleteDir()
+      }
+    }
     stage('Checkout') {
       steps {
         checkout scm
         sh """
           git checkout ${BRANCH_NAME}
         """
-      }
-    }
-    stage('Clean') {
-      steps {
-        sh script: 'make clean'
       }
     }
     stage('Build') {
