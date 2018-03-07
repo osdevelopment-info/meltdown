@@ -7,12 +7,12 @@ LD_OPTS = -melf_x86_64
 
 #all: prepare cpuinfo sighandler sigretry cachetiming cacheread
 
-all: prepare build
+all: build
 
 pdf: Meltdown-Spectre.nw
 	make -C pdf
 
-build: Meltdown-Spectre.nw
+build: prepare Meltdown-Spectre.nw
 	make -C asm
 
 clean:

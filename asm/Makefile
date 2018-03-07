@@ -17,7 +17,7 @@ cachetiming: cachetiming.o
 	$(LD) $(LD_OPTS) -o cachetiming cachetiming.o
 
 install:
-	mv cachetiming ../bin
+	mv cachetiming ../bin/
 
 clean:
 	rm *.o *.lst

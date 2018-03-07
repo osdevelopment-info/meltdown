@@ -1,2 +1,12 @@
 bin/
 build/
+pdf/*.pdf
+*~
+*.aux
+*.defs
+*.log
+*.lst
+*.o
+*.out
+*.tex
+*.toc

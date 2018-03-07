@@ -58,9 +58,13 @@ section .bss
 
 TBD
 
-\chapter{Handling Signals}
+\chapter{Signals}
 
 \section{Detecting Signals}
+
+TBD
+
+\section{Handling Signals}
 
 TBD
 
