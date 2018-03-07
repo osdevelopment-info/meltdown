@@ -8,9 +8,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh script: 'make -v'
-                sh script: 'nasm -v'
-                sh script: 'ld -v'
+                sh script: 'make'
             }
         }
         stage('Pdf') {
