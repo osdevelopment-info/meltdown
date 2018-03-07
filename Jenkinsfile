@@ -9,6 +9,11 @@ pipeline {
         """
       }
     }
+    stage('Clean') {
+      steps {
+        sh script: 'make clean'
+      }
+    }
     stage('Build') {
       steps {
         sh script: 'make'
