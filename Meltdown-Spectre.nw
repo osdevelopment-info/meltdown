@@ -30,7 +30,7 @@ bits 64
 
 \chapter{Cache Access Timing}
 
-\chapter{Detect Cache Access Time}
+\section{Detect Cache Access Time}
 
 TBD
 
