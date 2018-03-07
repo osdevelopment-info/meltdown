@@ -5,7 +5,15 @@ NASM_OPTS = -f elf64 -g -F stabs
 LD = /usr/bin/ld
 LD_OPTS = -melf_x86_64
 
-all: prepare cpuinfo sighandler sigretry cachetiming cacheread
+#all: prepare cpuinfo sighandler sigretry cachetiming cacheread
+
+all: prepare build
+
+pdf: Meltdown-Spectre.nw
+	make -C pdf
+
+build: Meltdown-Spectre.nw
+	make -C asm
 
 clean:
 	rm -rf bin

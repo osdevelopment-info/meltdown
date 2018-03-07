@@ -1,0 +1,146 @@
+\documentclass[a4paper]{scrbook}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{noweb}
+\usepackage{xcolor}
+
+\begin{document}
+
+\author{U. Plonus}
+\title{Meltdown and Spectre Samples}
+\subtitle{Written in Assembly}
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\section{Overview}
+
+TBD
+
+\section{Nasm}
+
+TBD
+
+<<preamble>>=
+bits 64
+     global _start
+@
+
+\chapter{Detect Cache Access Time}
+
+TBD
+
+<<cachetiming.asm>>=
+<<preamble>>
+
+<<cachetiming-data>>
+
+section .text
+_start:
+<<quit>>
+
+<<utilities>>
+@
+
+TBD
+
+<<cachetiming-data>>=
+section .bss
+     measures: resq 2048
+     padding:  resb 4096
+     align 4096
+     data:     times 257 resb 4096
+@
+
+\chapter{Read Array via Cache Access Time}
+
+TBD
+
+\chapter{Utilities}
+
+\section{Introduction}
+
+TBD
+
+<<utilities>>=
+<<print>>
+@
+
+\section{Quit Program}
+
+TBD
+
+<<quit>>=
+     xor       RDI,RDI
+     mov       RAX,60
+     syscall
+@
+
+\section{Printing Text}
+
+The routine [[_print]] prints a null-terminated string to the terminal (stdout).
+The only argument passed in to the routine (in [[RDI]]) is the address of the
+string to print.
+
+So first we start with clearing [[AL]] (setting it to null) and saving the
+address of the string to [[RSI]]. We're using [[RSI]] because we later need the
+address to calculate the length of the string and also [[RSI]] is the register
+that we need to use for the string address in the systemcall.
+
+<<print>>=
+_print:
+     xor       AL,AL
+     mov       RSI,RDI
+@
+
+Next we search for the terminating [[null]] ('[[\0]]') character. For this we
+use the instruction [[scasb]] (scan string byte) which compares the byte at the
+pointer [[[RDI]]] with the value in [[AL]] and sets the flags accordingly. When
+the byte at [[[RDI]]] is the value of [[AL]] the the next instruction ([[je]])
+jumps to the given target ([[.found0]] in this case). Else the next instruction
+will be executed (jumping back to the start of this fragment).
+
+[[scasb]] additionally increments [[RDI]] so that we go through the string until
+[[\0]] is found.
+
+<<print>>=
+.next_char:
+     scasb
+     je        .found0
+     jmp       .next_char
+.found0:
+@
+
+After we have found the string termination we calculate the number of bytes that
+the string has. For this we copy the value of the last byte read (which is in
+[[RDI]]) to [[RDX]] and subtract the start of the string (which we saved to
+[[RSI]]).
+
+Now we have the address of the string in [[RSI]] and the length of the string in
+[[RDX]] which are the 2nd and 3rd argument in a systemcall. The 1st argument (in
+[[RDI]]) to the systemcall is the file descriptor ([[1]] is stdout).
+Additionally the number of the systemcall ([[1]]) is passed in [[RAX]]. The
+systemcall ([[syscall]]) now prints [[RDX]] bytes from [[RSI]] to the file
+descriptor [[RDI]].
+
+<<print>>=
+     mov       RDX,RDI
+     sub       RDX,RSI
+     mov       RAX,1
+     mov       RDI,1
+     syscall
+@
+
+Now that we are done and can return to the caller.
+
+<<print>>=
+     ret
+@
+
+\section{Printing Numbers}
+
+TBD
+
+\end{document}
