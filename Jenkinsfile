@@ -20,9 +20,8 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: "2c643c15-f92b-4d22-bc95-6640fa74c163", variable: 'GH_TOKEN')]) {
                 	sh """
-						cd target/scmpublish-checkout
 						git commit -a -m 'Automatic created documentation'
-						git push -fq https://${GH_TOKEN}@github.com/sw4j-org/sandbox.git gh-pages:gh-pages
+						git push -fq https://${GH_TOKEN}@github.com/uweplonus/meltdown.git
 					"""
 				}
             }
