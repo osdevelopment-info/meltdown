@@ -109,7 +109,7 @@ _print:
 
 Next we search for the terminating [[null]] ('[[\0]]') character. For this we
 use the instruction [[scasb]] (scan string byte) which compares the byte at the
-pointer [[[RDI]]] with the value in [[AL]] and sets the flags accordingly. When
+address [[[RDI]]] with the value in [[AL]] and sets the flags accordingly. When
 the byte at [[[RDI]]] is the value of [[AL]] the the next instruction ([[je]])
 jumps to the given target ([[.found0]] in this case). Else the next instruction
 will be executed (jumping back to the start of this fragment).
@@ -134,7 +134,7 @@ Now we have the address of the string in [[RSI]] and the length of the string in
 [[RDX]] which are the 2nd and 3rd argument in a systemcall. The 1st argument (in
 [[RDI]]) to the systemcall is the file descriptor ([[1]] is stdout).
 Additionally the number of the systemcall ([[1]]) is passed in [[RAX]]. The
-systemcall ([[syscall]]) now prints [[RDX]] bytes from [[RSI]] to the file
+systemcall ([[syscall]]) now prints [[RDX]] bytes from [[[RSI]]] to the file
 descriptor [[RDI]].
 
 <<print>>=
