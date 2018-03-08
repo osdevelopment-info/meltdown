@@ -10,9 +10,9 @@ pipeline {
     // }
     stage('Checkout') {
       steps {
-        // checkout scm
-        // sh script: 'git checkout ${BRANCH_NAME}'
-        sh script: 'mount'
+        checkout scm
+        sh script: 'git checkout ${BRANCH_NAME}'
+        // sh script: 'mount'
       }
     }
     stage('Build') {
