@@ -110,9 +110,8 @@ _print:
 Next we search for the terminating [[null]] ('[[\0]]') character. For this we
 use the instruction [[scasb]] (scan string byte) which compares the byte at the
 address [[[RDI]]] with the value in [[AL]] and sets the flags accordingly. When
-the byte at [[[RDI]]] is the value of [[AL]] the the next instruction ([[je]])
-jumps to the given target ([[.found0]] in this case). Else the next instruction
-will be executed (jumping back to the start of this fragment).
+the byte at [[[RDI]]] is not the value of [[AL]] the the next instruction
+([[jne]]) jumps back to the given label ([[.next_char]] in this case).
 
 [[scasb]] additionally increments [[RDI]] so that we go through the string until
 [[\0]] is found.
@@ -120,9 +119,7 @@ will be executed (jumping back to the start of this fragment).
 <<print>>=
 .next_char:
      scasb
-     je        .found0
-     jmp       .next_char
-.found0:
+     jne       .next_char
 @
 
 After we have found the string termination we calculate the number of bytes that
