@@ -41,7 +41,7 @@ TBD
 
 section .text
 _start:
-<<quit>>
+<<exitProgram>>
 
 <<utilities>>
 @
@@ -80,11 +80,11 @@ TBD
 <<print>>
 @
 
-\section{Quit Program}
+\section{Exit Program}
 
 TBD
 
-<<quit>>=
+<<exitProgram>>=
      xor       RDI,RDI
      mov       RAX,60
      syscall
