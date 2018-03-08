@@ -5,15 +5,10 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        checkout([
-          $class: 'GitSCM',
-          branches: scm.branches,
-          extensions: scm.extensions + [[$class: 'WipeWorkspace']],
-          userRemoteConfigs: scm.userRemoteConfigs
-        ])
-        // sh script: """
-        //   git checkout ${BRANCH_NAME}
-        // """
+        checkout scm
+        sh script: """
+          git checkout ${BRANCH_NAME}
+        """
       }
     }
     stage('Build') {
