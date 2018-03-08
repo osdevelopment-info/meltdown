@@ -22,7 +22,7 @@ pipeline {
     }
     stage('Pdf') {
       steps {
-      	sh script: 'rm Meltdown-Spectre.pdf'
+      	// sh script: 'rm Meltdown-Spectre.pdf'
         sh script: 'make pdf'
       }
     }
