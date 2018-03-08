@@ -3,11 +3,11 @@ pipeline {
     dockerfile true
   }
   stages {
-  	stage('Clean') {
-      steps {
-        deleteDir()
-      }
-    }
+  	// stage('Clean') {
+    //   steps {
+    //     deleteDir()
+    //   }
+    // }
     stage('Checkout') {
       steps {
         // checkout scm
