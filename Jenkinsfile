@@ -3,16 +3,10 @@ pipeline {
     dockerfile true
   }
   stages {
-  	// stage('Clean') {
-    //   steps {
-    //     deleteDir()
-    //   }
-    // }
     stage('Checkout') {
       steps {
         checkout scm
         sh script: 'git checkout ${BRANCH_NAME}'
-        // sh script: 'mount'
       }
     }
     stage('Build') {
@@ -22,7 +16,6 @@ pipeline {
     }
     stage('Pdf') {
       steps {
-      	// sh script: 'rm Meltdown-Spectre.pdf'
         sh script: 'make pdf'
         withCredentials([string(credentialsId: "2c643c15-f92b-4d22-bc95-6640fa74c163", variable: 'GH_TOKEN')]) {
           sh """
