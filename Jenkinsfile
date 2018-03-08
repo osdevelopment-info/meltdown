@@ -11,7 +11,8 @@ pipeline {
     stage('Checkout') {
       steps {
         // checkout scm
-        sh script: 'git checkout ${BRANCH_NAME}'
+        // sh script: 'git checkout ${BRANCH_NAME}'
+        sh script: 'echo Hello'
       }
     }
     stage('Build') {
