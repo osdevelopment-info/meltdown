@@ -1,8 +1,17 @@
 \documentclass[a4paper]{scrbook}
 
-\usepackage[hidelinks]{hyperref}
 \usepackage{noweb}
 \usepackage{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=[rgb]{0,0,.4},
+    urlcolor=violet,
+    linktoc=all,
+    pdftitle={Meltdown and Spectre Samples},
+    bookmarks=true,
+}
 
 \begin{document}
 
@@ -30,6 +39,10 @@ bits 64
 
 \chapter{Cache Access Timing}
 
+\section{Basics}
+
+TBD
+
 \section{Detect Cache Access Time}
 
 TBD
@@ -37,18 +50,20 @@ TBD
 <<cachetiming.asm>>=
 <<preamble>>
 
-<<cachetiming-data>>
+<<cachetiming-uninitialized-data>>
 
 section .text
 _start:
 <<exitProgram>>
+
+<<xorshift-prng>>
 
 <<utilities>>
 @
 
 TBD
 
-<<cachetiming-data>>=
+<<cachetiming-uninitialized-data>>=
 section .bss
      measures: resq 2048
      padding:  resb 4096
@@ -88,6 +103,35 @@ TBD
      xor       RDI,RDI
      mov       RAX,60
      syscall
+@
+
+\section{Random Number Generator}
+
+To initialize the data a random number generator is used. The sample programs
+use xorshift\footnote{\url{https://en.wikipedia.org/wiki/Xorshift}} as random
+number generator.
+
+The start of the memory area to fill with random numbers is given in [[RDI]] and
+the number of bytes to fill in [[RSI]]. [[RSI]] must be a multiple of $4$. The
+seed of the rng is given in [[EDX]].
+
+<<xorshift-prng>>=
+_xorshift:
+     mov       RCX,RSI
+     shr       RCX,2
+.next_random:
+     mov       EBX,EDX
+     shl       EDX,13
+     xor       EDX,EBX
+     mov       EBX,EDX
+     shr       EDX,17
+     xor       EDX,EBX
+     mov       EBX,EDX
+     shl       EDX,5
+     xor       EDX,EBX
+     stosd
+     loop      .next_random
+     ret
 @
 
 \section{Printing Text}

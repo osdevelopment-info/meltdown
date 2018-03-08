@@ -13,6 +13,23 @@ _start:
      mov       RAX,60
      syscall
 
+_xorshift:
+     mov       RCX,RSI
+     shr       RCX,2
+.next_random:
+     mov       EBX,EDX
+     shl       EDX,13
+     xor       EDX,EBX
+     mov       EBX,EDX
+     shr       EDX,17
+     xor       EDX,EBX
+     mov       EBX,EDX
+     shl       EDX,5
+     xor       EDX,EBX
+     stosd
+     loop      .next_random
+     ret
+
 _print:
      xor       AL,AL
      mov       RSI,RDI
