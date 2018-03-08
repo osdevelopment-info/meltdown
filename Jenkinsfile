@@ -10,10 +10,8 @@ pipeline {
     }
     stage('Checkout') {
       steps {
-        checkout scm
-        sh """
-          git checkout ${BRANCH_NAME}
-        """
+        // checkout scm
+        sh script: 'git checkout ${BRANCH_NAME}'
       }
     }
     stage('Build') {
