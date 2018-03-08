@@ -7,7 +7,8 @@ pipeline {
       steps {
         // checkout scm
         sh script: """
-          git pull
+          git fetch
+          git checkout ${BRANCH_NAME}
         """
       }
     }
