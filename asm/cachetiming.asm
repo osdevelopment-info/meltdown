@@ -18,9 +18,7 @@ _print:
      mov       RSI,RDI
 .next_char:
      scasb
-     je        .found0
-     jmp       .next_char
-.found0:
+     jne       .next_char
      mov       RDX,RDI
      sub       RDX,RSI
      mov       RAX,1

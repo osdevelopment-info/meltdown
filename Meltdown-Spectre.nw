@@ -119,13 +119,7 @@ the byte at [[[RDI]]] is not the value of [[AL]] the the next instruction
 <<print>>=
 .next_char:
      scasb
-<<<<<<< HEAD
      jne       .next_char
-=======
-     je        .found0
-     jmp       .next_char
-.found0:
->>>>>>> 0a5534365b407303b0dd22559ff99305299d2603
 @
 
 After we have found the string termination we calculate the number of bytes that
