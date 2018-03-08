@@ -12,7 +12,7 @@ pipeline {
       steps {
         // checkout scm
         // sh script: 'git checkout ${BRANCH_NAME}'
-        sh script: 'echo Hello'
+        sh script: 'mount'
       }
     }
     stage('Build') {
