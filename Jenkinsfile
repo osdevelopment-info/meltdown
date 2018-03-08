@@ -1,8 +1,6 @@
 pipeline {
   agent {
-    docker {
-      image 'jenkins-literate-programming:latest'
-    }
+    dockerfile true
   }
   stages {
   	stage('Clean') {
