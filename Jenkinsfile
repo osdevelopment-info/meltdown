@@ -21,6 +21,7 @@ pipeline {
     }
     stage('Archive') {
       steps {
+        archiveArtifacts 'asm/*.asm'
         archiveArtifacts 'Meltdown-Spectre.pdf'
       }
     }
