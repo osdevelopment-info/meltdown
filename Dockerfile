@@ -1,4 +1,5 @@
 FROM ubuntu:16.04
 
 RUN apt-get update
-RUN apt-get install texlive-full
+RUN apt-get -y install git
+RUN apt-get -y install texlive-full
