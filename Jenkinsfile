@@ -3,11 +3,15 @@ pipeline {
     dockerfile true
   }
   stages {
+    stage('Clean') {
+      steps {
+        deleteDir()
+      }
+    }
     stage('Checkout') {
       steps {
-        // checkout scm
+        checkout scm
         sh script: """
-          git fetch
           git checkout ${BRANCH_NAME}
         """
       }
