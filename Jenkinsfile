@@ -3,17 +3,17 @@ pipeline {
     dockerfile true
   }
   stages {
-    stage('Clean') {
-      steps {
-        deleteDir()
-      }
-    }
     stage('Checkout') {
       steps {
-        checkout scm
-        sh script: """
-          git checkout ${BRANCH_NAME}
-        """
+        checkout([
+          $class: 'GitSCM',
+          branches: scm.branches,
+          extensions: scm.extensions + [[$class: 'WipeWorkspace']],
+          userRemoteConfigs: scm.userRemoteConfigs
+        ])
+        // sh script: """
+        //   git checkout ${BRANCH_NAME}
+        // """
       }
     }
     stage('Build') {
