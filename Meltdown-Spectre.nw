@@ -3,6 +3,7 @@
 \usepackage{noweb}
 \usepackage{xcolor}
 \usepackage{hyperref}
+\usepackage[acronym,toc,numberedsection=autolabel]{glossaries}
 
 \hypersetup{
     colorlinks=true,
@@ -12,6 +13,12 @@
     pdftitle={Meltdown and Spectre Samples},
     bookmarks=true,
 }
+
+\makeglossaries
+
+\setacronymstyle{long-short}
+
+\newacronym{rng}{RNG}{random number generator}
 
 \begin{document}
 
@@ -107,18 +114,24 @@ TBD
 
 \section{Random Number Generator}
 
-To initialize the data a random number generator is used. The sample programs
-use xorshift\footnote{\url{https://en.wikipedia.org/wiki/Xorshift}} as random
-number generator.
+To initialize the data a \gls{rng} is used. The sample programs use
+xorshift\footnote{\url{https://en.wikipedia.org/wiki/Xorshift}} as \gls{rng}.
 
 The start of the memory area to fill with random numbers is given in [[RDI]] and
 the number of bytes to fill in [[RSI]]. [[RSI]] must be a multiple of $4$. The
-seed of the rng is given in [[EDX]].
+seed of the \gls{rng} is given in [[EDX]].
+
+First we move the number of values to be generated to [[RCX]] (which is a
+counter in x86 processors) and divide it by 4 (because we use a 32bit
+\gls{rng}).
 
 <<xorshift-prng>>=
 _xorshift:
      mov       RCX,RSI
      shr       RCX,2
+@
+
+<<xorshift-prng>>=
 .next_random:
      mov       EBX,EDX
      shl       EDX,13
@@ -129,6 +142,9 @@ _xorshift:
      mov       EBX,EDX
      shl       EDX,5
      xor       EDX,EBX
+@
+
+<<xorshift-prng>>=
      stosd
      loop      .next_random
      ret
@@ -195,5 +211,9 @@ Now that we are done and can return to the caller.
 \section{Printing Numbers}
 
 TBD
+
+\appendix
+
+\printacronyms
 
 \end{document}
