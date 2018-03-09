@@ -4,10 +4,10 @@ bits 64
 
 section .rodata
      suncached:     db "Uncached Access Time: ",0x00
+     scached:       db "Cached Access Time: ",0x00
 
 section .bss
-     measures:      resq 2048
-     align pagesize
+     align          pagesize
      data:          times 2 resb pagesize
 
 section .text
@@ -52,15 +52,22 @@ _xorshift:
      loop      .next_random
      ret
 
+
+_nprint:
+     mov       RDX,RSI
+     mov       RSI,RDI
+     mov       RDI,1
+     mov       RAX,1
+     syscall
+     ret
+
 _print:
      xor       AL,AL
      mov       RSI,RDI
 .next_char:
      scasb
      jne       .next_char
-     mov       RDX,RDI
-     sub       RDX,RSI
-     mov       RAX,1
-     mov       RDI,1
-     syscall
+     xchg      RDI,RSI
+     sub       RSI,RDI
+     call      _nprint
      ret
