@@ -50,9 +50,35 @@ bits 64
 
 \chapter{Cache Access Timing}
 
-\section{Basics}
+\section{Introduction}
 
 TBD
+
+\section{Detect Cache Access Time}
+
+TBD
+
+<<tsc-64bit>>=
+     rdtsc
+     shl       RDX,32
+     add       RAX,RDX
+@
+
+TBD
+
+<<calculate-cache-access-time>>=
+_calccachetime:
+     xor       RAX,RAX
+     xor       RDX,RDX
+     lfence
+<<tsc-64bit>>
+     mov       R8,RAX
+     mov       RCX,[RDI]
+     lfence
+<<tsc-64bit>>
+     sub       RAX,R8
+     ret
+@
 
 \section{Detect Cache Access Time}
 
@@ -71,6 +97,8 @@ _start:
      call      _print
 <<exitProgram>>
 
+<<calculate-cache-access-time>>
+
 <<xorshift-prng>>
 
 <<utilities>>
@@ -81,9 +109,8 @@ TBD
 <<cachetiming-uninitialized-data>>=
 section .bss
      measures:      resq 2048
-     padding:       resb 4096
-     align 4096
-     data:          times 257 resb 4096
+     align pagesize
+     data:          times 2 resb pagesize
 @
 
 TBD

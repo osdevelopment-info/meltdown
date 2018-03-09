@@ -7,9 +7,8 @@ section .rodata
 
 section .bss
      measures:      resq 2048
-     padding:       resb 4096
-     align 4096
-     data:          times 257 resb 4096
+     align pagesize
+     data:          times 2 resb pagesize
 
 section .text
 _start:
@@ -18,6 +17,22 @@ _start:
      xor       RDI,RDI
      mov       RAX,60
      syscall
+
+_calccachetime:
+     xor       RAX,RAX
+     xor       RDX,RDX
+     lfence
+     rdtsc
+     shl       RDX,32
+     add       RAX,RDX
+     mov       R8,RAX
+     mov       RCX,[RDI]
+     lfence
+     rdtsc
+     shl       RDX,32
+     add       RAX,RDX
+     sub       RAX,R8
+     ret
 
 _xorshift:
      mov       RCX,RSI
