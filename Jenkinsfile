@@ -28,7 +28,7 @@ pipeline {
             git config --add user.name "CI Jenkins"
             git config push.default simple
             git diff --quiet && git diff --staged --quiet || git commit -a -m 'Automatic created documentation'
-            git push -fq https://${GH_TOKEN}@github.com/uweplonus/meltdown.git
+            # git push -fq https://${GH_TOKEN}@github.com/uweplonus/meltdown.git
           """
         }
       }
