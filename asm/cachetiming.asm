@@ -10,6 +10,7 @@ section .rodata
 section .bss
      align          pagesize
      data:          times 2 resb pagesize
+     scratch:       resb 32
 
 section .text
 _start:
@@ -23,15 +24,19 @@ _start:
      clflush   [RDI]
      mov       RCX,[RDI]
      call      _calccachetime
+     push      RAX
      mov       RDI,scached
      call      _print
-     mov       RDI,scr
-     mov       RSI,1
+     pop       RDI
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RSI,scr
+     mov       RDI,1
      call      _nprint
      mov       RDI,suncached
      call      _print
-     mov       RDI,scr
-     mov       RSI,1
+     mov       RSI,scr
+     mov       RDI,1
      call      _nprint
      xor       RDI,RDI
      mov       RAX,60
@@ -72,8 +77,7 @@ _xorshift:
 
 
 _nprint:
-     mov       RDX,RSI
-     mov       RSI,RDI
+     mov       RDX,RDI
      mov       RDI,1
      mov       RAX,1
      syscall
@@ -86,7 +90,45 @@ _print:
 .next_char:
      scasb
      jne       .next_char
-     xchg      RDI,RSI
-     sub       RSI,RDI
+     sub       RDI,RSI
+     call      _nprint
+     ret
+
+_printdu64bit:
+     mov       RAX,RDI
+     mov       RDI,RSI
+     mov       R8,RDI
+     mov       RCX,10
+     cld
+.next:
+     cmp       RAX,0
+     je        .done
+     xor       RDX,RDX
+     div       RCX
+     xchg      RDX,RAX
+     add       AL,'0'
+     stosb
+     mov       RAX,RDX
+     jmp       .next
+.done:
+     cmp       RDI,RSI
+     jne       .printout
+     mov       AL,'0'
+     stosb
+.printout:
+     mov       RDX,RDI
+     sub       RDX,RSI
+     dec       RDI
+.reverse:
+     mov       AL,[RSI]
+     mov       AH,[RDI]
+     mov       [RSI],AH
+     mov       [RDI],AL
+     dec       RDI
+     inc       RSI
+     cmp       RSI,RDI
+     jb        .reverse
+     mov       RSI,R8
+     mov       RDI,RDX
      call      _nprint
      ret

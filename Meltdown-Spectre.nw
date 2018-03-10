@@ -29,6 +29,8 @@
 
 \newacronym{rng}{RNG}{random number generator}
 
+\newacronym{ascii}{ASCII}{American Standard Code for Information Interchange}
+
 \newglossaryentry{x86}{
     name=x86,
     description={x86 denotes a microprocessor architecture based on the
@@ -167,6 +169,13 @@ section .bss
      data:          times 2 resb pagesize
 @ %def data
 
+From time to time we need a small scratch area so we define an area with
+32~bytes.
+
+<<cachetiming-uninitialized-data>>=
+     scratch:       resb 32
+@ %def scratch
+
 The program begins with the label \verb|_start| and is in the section
 \verb|.text|.
 
@@ -232,8 +241,21 @@ not need to load \verb|RDI| again because it has not changed.
      call      _calccachetime
 @
 
-Now we have the relative cache access time in register \verb|RAX|. Now we can
-print the measured time to \verb|stdout|.
+Now we have the relative cache access time in register \verb|RAX|. We store this
+value to the stack and print out an explaining text. Then we restore the value
+and print the measured time to \verb|stdout|.
+
+<<cachetiming-program>>=
+     push      RAX
+     mov       RDI,scached
+     call      _print
+     pop       RDI
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RSI,scr
+     mov       RDI,1
+     call      _nprint
+@
 
 TBD
 
@@ -248,15 +270,10 @@ TBD
 @
 
 <<cachetiming-program>>=
-     mov       RDI,scached
-     call      _print
-     mov       RDI,scr
-     mov       RSI,1
-     call      _nprint
      mov       RDI,suncached
      call      _print
-     mov       RDI,scr
-     mov       RSI,1
+     mov       RSI,scr
+     mov       RDI,1
      call      _nprint
 <<exitProgram>>
 
@@ -305,6 +322,8 @@ TBD
 <<nprint>>
 
 <<print>>
+
+<<printdu64bit>>
 @
 
 \section{Exit Program}
@@ -393,8 +412,7 @@ At the end we return to the caller.
 
 <<nprint>>=
 _nprint:
-     mov       RDX,RSI
-     mov       RSI,RDI
+     mov       RDX,RDI
      mov       RDI,1
      mov       RAX,1
      syscall
@@ -441,14 +459,12 @@ until '\verb|\0|' is found.
 @
 
 After we have found the string termination we calculate the number of bytes that
-the string has. For this we exchange the registers \verb|RDI| and \verb|RSI|. In
-\verb|RDI| we now have the starting address of the bytes to print and in
-\verb|RSI| we have the end address of the bytes to print. After that we
-calculate the number of bytes to print.
+the string has. In \verb|RSI| we now have the starting address of the bytes to
+print and in \verb|RDI| we have the end address of the bytes to print.
+After that we calculate the number of bytes to print.
 
 <<print>>=
-     xchg      RDI,RSI
-     sub       RSI,RDI
+     sub       RDI,RSI
 @
 
 Now we have the address of the string in \verb|RDI| and the length of the string
@@ -461,7 +477,130 @@ in \verb|RSI| which are the 1st and 2nd argument in the call of [[_nprint]].
 
 \section{Printing Numbers}
 
-TBD
+\subsection{Printing a 64bit Unsigned Integer}
+
+The routine [[_printdu64bit]] print a given number as unsigned decimal number
+with 64bit to \verb|stdout|.
+
+To print a decimal number we have to divide the number by $10$ and get the
+remainder for printing (from right to left). For this we move the divisor to
+a register and the dividend to \verb|RAX|. We have to use \verb|RAX| because
+this is the only register we can use for division.
+
+Additionally we need the address of the scratch area in \verb|RDI| for storing
+the result. We also save the address of the scratch area to \verb|R8| for later
+use.
+
+To increment the address during the processing we clear the direction flag.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the number number to print to \verb|stdout|
+\item [RSI] the address of a scratch area with a size of at least 20 bytes
+\end{labeling}
+
+<<printdu64bit>>=
+_printdu64bit:
+     mov       RAX,RDI
+     mov       RDI,RSI
+     mov       R8,RDI
+     mov       RCX,10
+     cld
+@ %def _printdu64bit
+
+Now we define a label to jump back when we see that there are still more digits
+to print. Then we test \verb|RAX| for $0$ and end the processing of the digits.
+
+<<printdu64bit>>=
+.next:
+     cmp       RAX,0
+     je        .done
+@
+
+Next we divide \verb|RAX| by \verb|RCX|. For this we have to clear \verb|RDX|
+because this is the higher value of the dividend. The result is then placed into
+\verb|RAX| and the remainder into \verb|RDX|.
+
+<<printdu64bit>>=
+     xor       RDX,RDX
+     div       RCX
+@
+
+We now exchange the result and the remainder because we now need the remainder
+in \verb|RAX| (or \verb|AL|) for further processing. Now we can add the
+\gls{ascii} character '0' to AL and have the correct \gls{ascii} value in AL.
+Now we can store the \gls{ascii} character to the scratch area.
+
+<<printdu64bit>>=
+     xchg      RDX,RAX
+     add       AL,'0'
+     stosb
+@
+
+Now we restore \verb|RAX| (which we saved to \verb|RDX|) to go into the next
+round.
+
+<<printdu64bit>>=
+     mov       RAX,RDX
+     jmp       .next
+@
+
+Now that we have all the numbers as \gls{ascii} characters we are nearly done.
+We now have to reverse the number in memory because the number saved at the
+lowest address is the digit with the least significance.
+
+We now start with checking if we have written any character. If not then we
+write the \gls{ascii} character '0' into the memory. We use the instruction
+\verb|stosb| for this to adjust the address in \verb|RDI| at the same time.
+
+<<printdu64bit>>=
+.done:
+     cmp       RDI,RSI
+     jne       .printout
+     mov       AL,'0'
+     stosb
+.printout:
+@
+
+Next we calculate the number of digits that the number has. For this we move the
+address of the last digit to \verb|RDX| and subtract the start of the scratch
+area from this. Next we adjust \verb|RDI| because it points to the first address
+after the number.
+
+<<printdu64bit>>=
+     mov       RDX,RDI
+     sub       RDX,RSI
+     dec       RDI
+@
+
+We now have \verb|RSI| with the address of the start of the number and
+\verb|RDI| with the address of the end. We now have to exchange the digits from
+the front and the end to get the right number. For this we increment \verb|RSI|
+and decrement \verb|RDI| after each exchange and when the addresses pass each
+other we are done.
+
+<<printdu64bit>>=
+.reverse:
+     mov       AL,[RSI]
+     mov       AH,[RDI]
+     mov       [RSI],AH
+     mov       [RDI],AL
+     dec       RDI
+     inc       RSI
+     cmp       RSI,RDI
+     jb        .reverse
+@
+
+Now we restore the address of the scratch area to \verb|RSI| and move the number
+of digits (which we stored in \verb|RDX|) to \verb|RDI| and can the call
+[[_nprint]] to print the number.
+
+<<printdu64bit>>=
+     mov       RSI,R8
+     mov       RDI,RDX
+     call      _nprint
+     ret
+@
 
 \appendix
 
