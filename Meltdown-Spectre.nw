@@ -38,13 +38,25 @@
 \newglossaryentry{rdtsc}{
     type=ins,
     name=\ttfamily{rdtsc},
-    description={Read Time Stamp Counter}
+    description={Read Time Stamp Counter, introduced with
+        Intel\textsuperscript{\textregistered}
+        Pentium\textsuperscript{\textregistered}}
 }
 
 \newglossaryentry{lfence}{
     type=ins,
     name=\ttfamily{lfence},
-    description={Load Fence}
+    description={Load Fence, introduced with
+        Intel\textsuperscript{\textregistered}
+        Pentium\textsuperscript{\textregistered}~4}
+}
+
+\newglossaryentry{clflush}{
+    type=ins,
+    name=\ttfamily{clflush},
+    description={Flush Cache Line, introduced with
+        Intel\textsuperscript{\textregistered}
+        Pentium\textsuperscript{\textregistered}~4}
 }
 
 \begin{document}
@@ -84,14 +96,13 @@ TBD
 \subsection{High Resolution Timer}
 
 First we need a high resolution timer to determine the cache access time. For
-this Intel\textsuperscript{\textregistered} processors since the
-Pentium\textsuperscript{\textregistered} model have a time stamp counter. The
-time stamp counter is monotonically incrementing. When reading the time stamp
-counter (with \gls{rdtsc}) the result is delivered back in the registers
-\verb|EDX| and \verb|EAX| forming a 64bit value. The time stamp counter is not
-an absolute value but a relative value, meaning that you cannot (easily)
-calculate from the time stamp counter to some time units (e.g. ns). But this is
-no problem as we only want to measure relative times.
+this we use the time stamp counter. The time stamp counter is monotonically
+incrementing. When reading the time stamp counter (with \gls{rdtsc}) the result
+is delivered back in the registers \verb|EDX| and \verb|EAX| forming a 64bit
+value. The time stamp counter is not an absolute value but a relative value,
+meaning that you cannot (easily) calculate from the time stamp counter to some
+time units (e.g. ns). But this is no problem as we only want to measure relative
+times.
 
 To retrieve a 64bit value for the time we shift the value in \verb|EDX| 32 bits
 to the left and add the value of \verb|EAX| to this.
@@ -140,6 +151,8 @@ _calccachetime:
 @ %def _calccachetime
 
 \section{Measure Cache Access Time}
+
+\subsection{Setup}
 
 To measure the cache timing we create a standalone program that shows us the
 time for a cached and for an uncached memory access.
@@ -191,6 +204,33 @@ Now we call [[_xorshift]] to fill the [[data]] area.
 <<cachetiming-program>>=
      call      _xorshift
 @
+
+\subsection{Measure Time}
+
+Now that we have setup our [[data]] area we can now cache data from the first
+page by loading it into a register which also loads this into the cache.
+
+For this we load \verb|RDI| with the address of the [[data]] area.
+
+<<cachetiming-program>>=
+     mov       RDI,data
+@
+
+Before we load the data into a register now we will clear the cache lines with
+the given address. For this we use the instruction 
+
+<<cachetiming-program>>=
+     mov       RCX,[RDI]
+@
+
+Now we can determine the time that is needed to load this data once again. We do
+not need to load \verb|RDI| again because it has not changed.
+
+<<cachetiming-program>>=
+     call      _calccachetime
+@
+
+Now we have the relative cache access time in register RAX.
 
 TBD
 
