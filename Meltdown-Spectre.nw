@@ -217,9 +217,11 @@ For this we load \verb|RDI| with the address of the [[data]] area.
 @
 
 Before we load the data into a register now we will clear the cache lines with
-the given address. For this we use the instruction 
+the given address. For this we use the instruction \gls{clflush}. After that
+we will load the data into a register.
 
 <<cachetiming-program>>=
+     clflush   [RDI]
      mov       RCX,[RDI]
 @
 
@@ -230,7 +232,8 @@ not need to load \verb|RDI| again because it has not changed.
      call      _calccachetime
 @
 
-Now we have the relative cache access time in register RAX.
+Now we have the relative cache access time in register \verb|RAX|. Now we can
+print the measured time to \verb|stdout|.
 
 TBD
 
@@ -319,7 +322,10 @@ TBD
 To initialize the data a \gls{rng} is used. The sample programs use
 xorshift\footnote{\url{https://en.wikipedia.org/wiki/Xorshift}} as \gls{rng}.
 
-First we move the number of values to be generated to \verb|RCX| (which is a
+First we clear the direction flag to ensure that we are incrementing the data
+pointer \verb|RDI|.
+
+Next we move the number of values to be generated to \verb|RCX| (which is a
 counter in \gls{x86} processors) and divide it by 4 (because we use a 32bit
 \gls{rng}). Additionally we move the seed to \verb|EAX|.
 
@@ -333,6 +339,7 @@ be a multiple of $4$
 
 <<xorshift-prng>>=
 _xorshift:
+     cld
      mov       RCX,RSI
      shr       RCX,2
      mov       EAX,EDX
@@ -398,7 +405,10 @@ _nprint:
 
 The routine [[_print]] prints a null-terminated string to \verb|stdout|.
 
-So first we start with clearing \verb|AL| (setting it to null) and saving the
+First we clear the direction flag to increment the address in \verb|RDI| while
+scanning the data.
+
+Next we start with clearing \verb|AL| (setting it to null) and saving the
 address of the string to \verb|RSI|. We're using \verb|RSI| because we later
 need the address to calculate the length of the string.
 
@@ -409,6 +419,7 @@ need the address to calculate the length of the string.
 
 <<print>>=
 _print:
+     cld
      xor       AL,AL
      mov       RSI,RDI
 @ %def _print

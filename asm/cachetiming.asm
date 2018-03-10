@@ -19,6 +19,10 @@ _start:
      rdtsc
      mov       EDX,EAX
      call      _xorshift
+     mov       RDI,data
+     clflush   [RDI]
+     mov       RCX,[RDI]
+     call      _calccachetime
      mov       RDI,scached
      call      _print
      mov       RDI,scr
@@ -48,6 +52,7 @@ _calccachetime:
      ret
 
 _xorshift:
+     cld
      mov       RCX,RSI
      shr       RCX,2
      mov       EAX,EDX
@@ -75,6 +80,7 @@ _nprint:
      ret
 
 _print:
+     cld
      xor       AL,AL
      mov       RSI,RDI
 .next_char:
