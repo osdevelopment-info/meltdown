@@ -10,6 +10,7 @@ pipeline {
       steps {
         checkout scm
         sh script: """
+          git pull
           git checkout ${BRANCH_NAME}
         """
       }
