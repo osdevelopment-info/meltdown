@@ -11,7 +11,6 @@ pipeline {
         checkout scm
         sh script: """
           git pull
-          git checkout ${BRANCH_NAME}
         """
       }
     }
@@ -20,6 +19,7 @@ pipeline {
         dockerfile true
       }
       steps {
+        sh script: 'git checkout ${BRANCH_NAME}'
         sh script: 'make'
         sh script: 'make pdf'
         withCredentials([string(credentialsId: "2c643c15-f92b-4d22-bc95-6640fa74c163", variable: 'GH_TOKEN')]) {
