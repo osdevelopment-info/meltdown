@@ -7,9 +7,9 @@ pdf/*.pdf
 *.alg
 *.aux
 *.defs
-*.glg
-*.glo
-*.gls
+*glg
+*glo
+*gls
 *.glsdefs
 *.ist
 *.log

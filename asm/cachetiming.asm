@@ -5,6 +5,7 @@ bits 64
 section .rodata
      suncached:     db "Uncached Access Time: ",0x00
      scached:       db "Cached Access Time: ",0x00
+     scr:           db 0x0a
 
 section .bss
      align          pagesize
@@ -12,15 +13,27 @@ section .bss
 
 section .text
 _start:
+     mov       RDI,data
+     mov       RSI,pagesize
+     shl       RSI,1
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
+     mov       RDI,scached
+     call      _print
+     mov       RDI,scr
+     mov       RSI,1
+     call      _nprint
      mov       RDI,suncached
      call      _print
+     mov       RDI,scr
+     mov       RSI,1
+     call      _nprint
      xor       RDI,RDI
      mov       RAX,60
      syscall
 
 _calccachetime:
-     xor       RAX,RAX
-     xor       RDX,RDX
      lfence
      rdtsc
      shl       RDX,32

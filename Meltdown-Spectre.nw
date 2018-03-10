@@ -6,7 +6,7 @@
 
 \usepackage{noweb}
 \usepackage{xcolor}
-\usepackage{hyperref}
+\usepackage[breaklinks]{hyperref}
 \usepackage[acronym,toc,numberedsection=autolabel,nopostdot]{glossaries}
 
 \renewcommand{\autodot}{}
@@ -19,18 +19,36 @@
     pdftitle={Meltdown and Spectre Samples},
 }
 
+\setkomafont{labelinglabel}{\ttfamily}
+
+\newglossary*{ins}{x86-Instructions}
+
 \makeglossaries
 
 \setacronymstyle{long-short}
 
 \newacronym{rng}{RNG}{random number generator}
+
 \newglossaryentry{x86}{
-    name={x86},
+    name=x86,
     description={x86 denotes a microprocessor architecture based on the
     8086/8088}
 }
 
+\newglossaryentry{rdtsc}{
+    type=ins,
+    name=\ttfamily{rdtsc},
+    description={Read Time Stamp Counter}
+}
+
+\newglossaryentry{lfence}{
+    type=ins,
+    name=\ttfamily{lfence},
+    description={Load Fence}
+}
+
 \begin{document}
+@
 
 \author{U. Plonus}
 \title{Meltdown and Spectre Samples}
@@ -53,7 +71,7 @@ TBD
 bits 64
      global         _start
      pagesize       equ  4096
-@
+@ %def pagesize _start
 
 \chapter{Cache Access Timing}
 
@@ -63,7 +81,20 @@ TBD
 
 \section{Detect Cache Access Time}
 
-TBD
+\subsection{High Resolution Timer}
+
+First we need a high resolution timer to determine the cache access time. For
+this Intel\textsuperscript{\textregistered} processors since the
+Pentium\textsuperscript{\textregistered} model have a time stamp counter. The
+time stamp counter is monotonically incrementing. When reading the time stamp
+counter (with \gls{rdtsc}) the result is delivered back in the registers
+\verb|EDX| and \verb|EAX| forming a 64bit value. The time stamp counter is not
+an absolute value but a relative value, meaning that you cannot (easily)
+calculate from the time stamp counter to some time units (e.g. ns). But this is
+no problem as we only want to measure relative times.
+
+To retrieve a 64bit value for the time we shift the value in \verb|EDX| 32 bits
+to the left and add the value of \verb|EAX| to this.
 
 <<tsc-64bit>>=
      rdtsc
@@ -71,12 +102,33 @@ TBD
      add       RAX,RDX
 @
 
-TBD
+\subsection{Cache Access Time Routine}
+
+Next we need a routine that calculates the cache access time for us.
+
+First we have to ensure in this routine that the speculative execution of the
+processor does not interfere with our time measurement. For this we use the
+instruction \gls{lfence} which ensures that all previous reads are done before
+executing the next instructions.
+
+Next we access a memory location with the address \verb|RDI| by loading this
+into \verb|RCX| and measure the time before and after the access.
+
+The command \gls{lfence} before reading the time stamp counter is needed
+because we have to ensure that all reads before the time measurements are done.
+
+At last we calculate the relative time needed to access the memory location. In
+theory we should see a difference whether the memory location is accessed before
+or not.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the address of the memory which is loaded either from the cache or
+from memory
+\end{labeling}
 
 <<calculate-cache-access-time>>=
 _calccachetime:
-     xor       RAX,RAX
-     xor       RDX,RDX
      lfence
 <<tsc-64bit>>
      mov       R8,RAX
@@ -85,9 +137,60 @@ _calccachetime:
 <<tsc-64bit>>
      sub       RAX,R8
      ret
+@ %def _calccachetime
+
+\section{Measure Cache Access Time}
+
+To measure the cache timing we create a standalone program that shows us the
+time for a cached and for an uncached memory access.
+
+First we need some area in memory with data which we can later read from. This
+data area goes into the area \verb|.bss| which contains uninitialized data. We
+align the data at a page boundary and reserve 2 pages for our data.
+
+<<cachetiming-uninitialized-data>>=
+section .bss
+     align          pagesize
+     data:          times 2 resb pagesize
+@ %def data
+
+The program begins with the label \verb|_start| and is in the section
+\verb|.text|.
+
+<<cachetiming-program>>=
+section .text
+_start:
 @
 
-\section{Detect Cache Access Time}
+Now we start with initialising the [[data]] area with some random data. For this
+we load \verb|RDI| with the address of the [[data]] area.
+
+<<cachetiming-program>>=
+     mov       RDI,data
+@
+
+Next we load the number of bytes to fill into \verb|RSI|. For this we load the
+[[pagesize]] into \verb|RSI| and multiply it with $2$ by shifting the value
+1~bit to the left.
+
+<<cachetiming-program>>=
+     mov       RSI,pagesize
+     shl       RSI,1
+@
+
+At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc}
+and only use the lower 32~bit of the value.
+
+<<cachetiming-program>>=
+     rdtsc
+     mov       EDX,EAX
+@
+
+Now we call [[_xorshift]] to fill the [[data]] area.
+
+<<cachetiming-program>>=
+     call      _xorshift
+@
 
 TBD
 
@@ -98,10 +201,20 @@ TBD
 
 <<cachetiming-uninitialized-data>>
 
-section .text
-_start:
+<<cachetiming-program>>
+@
+
+<<cachetiming-program>>=
+     mov       RDI,scached
+     call      _print
+     mov       RDI,scr
+     mov       RSI,1
+     call      _nprint
      mov       RDI,suncached
      call      _print
+     mov       RDI,scr
+     mov       RSI,1
+     call      _nprint
 <<exitProgram>>
 
 <<calculate-cache-access-time>>
@@ -113,19 +226,12 @@ _start:
 
 TBD
 
-<<cachetiming-uninitialized-data>>=
-section .bss
-     align          pagesize
-     data:          times 2 resb pagesize
-@
-
-TBD
-
 <<cachetiming-rodata>>=
 section .rodata
      suncached:     db "Uncached Access Time: ",0x00
      scached:       db "Cached Access Time: ",0x00
-@
+     scr:           db 0x0a
+@ %def suncached scached scr
 
 \section{Read Array via Cache Access Time}
 
@@ -173,6 +279,10 @@ TBD
 To initialize the data a \gls{rng} is used. The sample programs use
 xorshift\footnote{\url{https://en.wikipedia.org/wiki/Xorshift}} as \gls{rng}.
 
+First we move the number of values to be generated to \verb|RCX| (which is a
+counter in \gls{x86} processors) and divide it by 4 (because we use a 32bit
+\gls{rng}). Additionally we move the seed to \verb|EAX|.
+
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
 \item [RDI] the address of the memory which is to be filled with random numbers
@@ -181,16 +291,12 @@ be a multiple of $4$
 \item [EDX] the seed of the \gls{rng}
 \end{labeling}
 
-First we move the number of values to be generated to [[RCX]] (which is a
-counter in \gls{x86} processors) and divide it by 4 (because we use a 32bit
-\gls{rng}). Additionally we move the seed to [[EAX]].
-
 <<xorshift-prng>>=
 _xorshift:
      mov       RCX,RSI
      shr       RCX,2
      mov       EAX,EDX
-@
+@ %def _xorshift
 
 Now we can generate the next 32bit random number.
 
@@ -208,7 +314,7 @@ Now we can generate the next 32bit random number.
 @
 
 Because we want to generate multiple random numbers we store the value of
-[[EAX]] to [[[RDI]]] and loop for the next random number.
+\verb|EAX| to \verb|[RDI]| and loop for the next random number.
 
 <<xorshift-prng>>=
      stosd
@@ -220,22 +326,23 @@ Because we want to generate multiple random numbers we store the value of
 
 \subsection{Printing Strings with Length}
 
-The routine [[_nprint]] prints a string with the given length to [[stdout]].
+The routine [[_nprint]] prints a string with the given length to \verb|stdout|.
+
+We move the number of bytes to print to \verb|RDX| which is the 3rd parameter to
+the systemcall. Next we move the address of the bytes to print to \verb|RSI|
+which is the 2nd parameter to the systemcall. The 1st argument (in \verb|RDI|)
+to the systemcall is the file descriptor (\verb|1| is stdout). Additionally the
+number of the systemcall (\verb|1|) is passed in \verb|RAX|. The systemcall
+(\verb|syscall|) now prints \verb|RDX| bytes from \verb|[RSI]| to the file
+descriptor \verb|RDI|.
+
+At the end we return to the caller.
 
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
-\item [RDI] the number of bytes to print to [[stdout]]
-\item [RSI] the address to the bytes to print to [[stdout]]
+\item [RDI] the number of bytes to print to \verb|stdout|
+\item [RSI] the address to the bytes to print to \verb|stdout|
 \end{labeling}
-
-We move the number of bytes to print to [[RDX]] which is the 3rd parameter to
-the systemcall. Next we move the address of the bytes to print to [[RSI]] which
-is the 2nd parameter to the systemcall. The 1st argument (in [[RDI]]) to the
-systemcall is the file descriptor ([[1]] is stdout). Additionally the number of
-the systemcall ([[1]]) is passed in [[RAX]]. The systemcall ([[syscall]]) now
-prints [[RDX]] bytes from [[[RSI]]] to the file descriptor [[RDI]].
-
-At the end we return to the caller.
 
 <<nprint>>=
 _nprint:
@@ -245,35 +352,36 @@ _nprint:
      mov       RAX,1
      syscall
      ret
-@
+@ %def _nprint
 
 \subsection{Printing C-Strings}
 
-The routine [[_print]] prints a null-terminated string to [[stdout]].
+The routine [[_print]] prints a null-terminated string to \verb|stdout|.
+
+So first we start with clearing \verb|AL| (setting it to null) and saving the
+address of the string to \verb|RSI|. We're using \verb|RSI| because we later
+need the address to calculate the length of the string.
 
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
-\item [RDI] the address to the null-terminated bytes to print to [[stdout]]
+\item [RDI] the address to the null-terminated bytes to print to \verb|stdout|
 \end{labeling}
-
-So first we start with clearing [[AL]] (setting it to null) and saving the
-address of the string to [[RSI]]. We're using [[RSI]] because we later need the
-address to calculate the length of the string.
 
 <<print>>=
 _print:
      xor       AL,AL
      mov       RSI,RDI
-@
+@ %def _print
 
-Next we search for the terminating [[null]] ('[[\0]]') character. For this we
-use the instruction [[scasb]] (scan string byte) which compares the byte at the
-address [[[RDI]]] with the value in [[AL]] and sets the flags accordingly. When
-the byte at [[[RDI]]] is not the value of [[AL]] the the next instruction
-([[jne]]) jumps to the given label ([[.next_char]] in this case).
+Next we search for the terminating \verb|null| ('\verb|\0|') character. For this
+we use the instruction \verb|scasb| (scan string byte) which compares the byte
+at the address \verb|[RDI]| with the value in \verb|AL| and sets the flags
+accordingly. When the byte at \verb|[RDI]| is not the value of \verb|AL| the
+next instruction (\verb|jne|) jumps to the given label (\verb|.next_char| in
+this case).
 
-[[scasb]] additionally increments [[RDI]] so that we go through the string until
-[[\0]] is found.
+\verb|scasb| additionally increments \verb|RDI| so that we go through the string
+until '\verb|\0|' is found.
 
 <<print>>=
 .next_char:
@@ -282,23 +390,18 @@ the byte at [[[RDI]]] is not the value of [[AL]] the the next instruction
 @
 
 After we have found the string termination we calculate the number of bytes that
-the string has. For this we exchange the registers [[RDI]] and [[RSI]]. In
-[[RDI]] we now have the starting address of the bytes to print and in RSI we
-have the end address of the bytes to print. After that we calculate the number
-of bytes to print.
+the string has. For this we exchange the registers \verb|RDI| and \verb|RSI|. In
+\verb|RDI| we now have the starting address of the bytes to print and in
+\verb|RSI| we have the end address of the bytes to print. After that we
+calculate the number of bytes to print.
 
 <<print>>=
      xchg      RDI,RSI
      sub       RSI,RDI
 @
 
-TODO
-Now we have the address of the string in [[RSI]] and the length of the string in
-[[RDX]] which are the 2nd and 3rd argument in a systemcall. The 1st argument (in
-[[RDI]]) to the systemcall is the file descriptor ([[1]] is stdout).
-Additionally the number of the systemcall ([[1]]) is passed in [[RAX]]. The
-systemcall ([[syscall]]) now prints [[RDX]] bytes from [[[RSI]]] to the file
-descriptor [[RDI]].
+Now we have the address of the string in \verb|RDI| and the length of the string
+in \verb|RSI| which are the 1st and 2nd argument in the call of [[_nprint]].
 
 <<print>>=
      call      _nprint
@@ -315,8 +418,11 @@ TBD
 
 \printacronyms
 
+\printglossary[type=ins]
+
 \chapter{Code Chunks}
 
 \nowebchunks
 
+@
 \end{document}

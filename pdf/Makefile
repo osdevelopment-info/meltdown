@@ -1,7 +1,10 @@
 
 all:
-	noweave -x -delay ../Meltdown-Spectre.nw > Meltdown-Spectre.tex
+	nodefs ../Meltdown-Spectre.nw | sort -u > Meltdown-Spectre.defs
+	noweave -indexfrom Meltdown-Spectre.defs -delay ../Meltdown-Spectre.nw > Meltdown-Spectre.tex
+	#noweave -x -delay ../Meltdown-Spectre.nw > Meltdown-Spectre.tex
 	xelatex -8bit Meltdown-Spectre
+	#makeindex Meltdown-Spectre
 	makeglossaries Meltdown-Spectre
 	xelatex -8bit Meltdown-Spectre
 	xelatex -8bit Meltdown-Spectre
