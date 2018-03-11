@@ -88,7 +88,7 @@ TBD
 <<preamble>>=
 bits 64
      global         _start
-     pagesize       equ  4096
+     pagesize       equ 4096
 @ %def pagesize _start
 
 \chapter{Cache Access Timing}
@@ -157,6 +157,7 @@ _calccachetime:
 @ %def _calccachetime
 
 \section{Measure Cache Access Time}
+\label{sec:Measure Cache Access Time}
 
 \subsection{Setup}
 
@@ -168,7 +169,6 @@ data area goes into the area \verb|.bss| which contains uninitialized data. We
 align the data at a page boundary and reserve 2 pages for our data.
 
 <<cachetiming-uninitialized-data>>=
-section .bss
      align          pagesize
      data:          times 2 resb pagesize
 @ %def data
@@ -176,9 +176,13 @@ section .bss
 From time to time we need a small scratch area so we define an area with
 32~bytes.
 
-<<cachetiming-uninitialized-data>>=
+<<scratch-data>>=
      scratch:       resb 32
 @ %def scratch
+
+<<cachetiming-uninitialized-data>>=
+<<scratch-data>>
+@
 
 The program begins with the label \verb|_start| and is in the section
 \verb|.text|.
@@ -253,7 +257,6 @@ value to the stack and print out an explaining text.
 For this we define the text to print and (as a helper) a \gls{cr}.
 
 <<cachetiming-rodata>>=
-section .rodata
      scr:           db 0x0a
      scached:       db "Cached Access Time: ",0x00
 @ %def scached scr
@@ -313,8 +316,10 @@ we can now execute.
 <<cachetiming.asm>>=
 <<preamble>>
 
+section .rodata
 <<cachetiming-rodata>>
 
+section .bss
 <<cachetiming-uninitialized-data>>
 
 <<cachetiming-program>>
@@ -334,7 +339,55 @@ program.
 
 \section{Read Array via Cache Access Time}
 
+Now that we have seen that we can determine if a value was in the cache or not
+(see \ref{sec:Measure Cache Access Time}
+\nameref{sec:Measure Cache Access Time}) we will read a complete array of data
+by only measuring the cache access time.
+
+For this we start with some data area that we can read later.
+
+<<cacheread-preamble>>=
+     datasize       equ 1024
+@
+
+<<cacheread-uninitialized-data>>=
+     align          pagesize
+     data:          resb datasize
+@
+
+Additionally we add a scratch area again.
+
+<<cacheread-uninitialized-data>>=
+<<scratch-data>>
+@
+
+
 TBD
+
+<<cacheread-program>>=
+section .text
+_start:
+@
+
+TBD
+
+<<cacheread.asm>>=
+<<preamble>>
+<<cacheread-preamble>>
+
+section .bss
+<<cacheread-uninitialized-data>>
+
+<<cacheread-program>>
+
+<<exitProgram>>
+
+<<calculate-cache-access-time>>
+
+<<xorshift-prng>>
+
+<<utilities>>
+@
 
 \chapter{Signals}
 
