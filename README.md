@@ -1,4 +1,4 @@
-[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=Assembly/Multi%20Meltdown/master)](https://ci.sw4j.net/jenkins/job/Assembly/Multi%20Meltdown/master)
+[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=Assembly/Multi%20Meltdown/master)](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/)
 
 # Introduction
 
@@ -15,7 +15,7 @@ The main documentation is in the file
 The generated programs can be found in `asm/`.
 
 For the latest source codes and pdf look at the
-[CI page](https://ci.sw4j.net/jenkins/job/Assembly/Multi%20Meltdown/master).
+[CI page](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/).
 
 If you want to generate the programs yourself do a `make` at the top level folder. To generate the pdf file do a
 `make pdf`.
