@@ -31,6 +31,10 @@
 
 \newacronym{ascii}{ASCII}{American Standard Code for Information Interchange}
 
+\glsunset{ascii}
+
+\newacronym{cr}{CR}{carriage return}
+
 \newglossaryentry{x86}{
     name=x86,
     description={x86 denotes a microprocessor architecture based on the
@@ -226,11 +230,13 @@ For this we load \verb|RDI| with the address of the [[data]] area.
 @
 
 Before we load the data into a register now we will clear the cache lines with
-the given address. For this we use the instruction \gls{clflush}. After that
-we will load the data into a register.
+the given address. For this we use the instruction \gls{clflush}. After flushing
+the cache line we ensure (with \gls{lfence}) that all reads from memory are
+finished before we load the data into a register again (and filling the cache).
 
 <<cachetiming-program>>=
      clflush   [RDI]
+     lfence
      mov       RCX,[RDI]
 @
 
@@ -242,12 +248,56 @@ not need to load \verb|RDI| again because it has not changed.
 @
 
 Now we have the relative cache access time in register \verb|RAX|. We store this
-value to the stack and print out an explaining text. Then we restore the value
-and print the measured time to \verb|stdout|.
+value to the stack and print out an explaining text.
+
+For this we define the text to print and (as a helper) a \gls{cr}.
+
+<<cachetiming-rodata>>=
+section .rodata
+     scr:           db 0x0a
+     scached:       db "Cached Access Time: ",0x00
+@ %def scached scr
+
+Now we can print the text.
 
 <<cachetiming-program>>=
      push      RAX
      mov       RDI,scached
+     call      _print
+@
+
+Then we restore the value and print the measured time to \verb|stdout|. At last
+we append a \gls{cr} to the output.
+
+<<cachetiming-program>>=
+     pop       RDI
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RSI,scr
+     mov       RDI,1
+     call      _nprint
+@
+
+Now we do the same with an uncached value. The difference is that we do not load
+the value before.
+
+<<cachetiming-program>>=
+     mov       RDI,data
+     clflush   [RDI]
+     lfence
+     call      _calccachetime
+@
+
+Now we have the time of the uncached data access in \verb|RAX| and can print it
+out with some explaining text.
+
+<<cachetiming-rodata>>=
+     suncached:     db "Uncached Access Time: ",0x00
+@ %def suncached
+
+<<cachetiming-program>>=
+     push      RAX
+     mov       RDI,suncached
      call      _print
      pop       RDI
      mov       RSI,scratch
@@ -257,7 +307,8 @@ and print the measured time to \verb|stdout|.
      call      _nprint
 @
 
-TBD
+Now we can put everything together and have our \verb|cachetiming| program that
+we can now execute.
 
 <<cachetiming.asm>>=
 <<preamble>>
@@ -267,14 +318,7 @@ TBD
 <<cachetiming-uninitialized-data>>
 
 <<cachetiming-program>>
-@
 
-<<cachetiming-program>>=
-     mov       RDI,suncached
-     call      _print
-     mov       RSI,scr
-     mov       RDI,1
-     call      _nprint
 <<exitProgram>>
 
 <<calculate-cache-access-time>>
@@ -284,14 +328,9 @@ TBD
 <<utilities>>
 @
 
-TBD
-
-<<cachetiming-rodata>>=
-section .rodata
-     suncached:     db "Uncached Access Time: ",0x00
-     scached:       db "Cached Access Time: ",0x00
-     scr:           db 0x0a
-@ %def suncached scached scr
+The program is placed in \verb|asm/|. With \verb|make| in the folder we can
+create an executable which is moved to \verb|bin/|. There we can execute this
+program.
 
 \section{Read Array via Cache Access Time}
 

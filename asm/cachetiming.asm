@@ -3,9 +3,9 @@ bits 64
      pagesize       equ  4096
 
 section .rodata
-     suncached:     db "Uncached Access Time: ",0x00
-     scached:       db "Cached Access Time: ",0x00
      scr:           db 0x0a
+     scached:       db "Cached Access Time: ",0x00
+     suncached:     db "Uncached Access Time: ",0x00
 
 section .bss
      align          pagesize
@@ -22,6 +22,7 @@ _start:
      call      _xorshift
      mov       RDI,data
      clflush   [RDI]
+     lfence
      mov       RCX,[RDI]
      call      _calccachetime
      push      RAX
@@ -33,11 +34,20 @@ _start:
      mov       RSI,scr
      mov       RDI,1
      call      _nprint
+     mov       RDI,data
+     clflush   [RDI]
+     lfence
+     call      _calccachetime
+     push      RAX
      mov       RDI,suncached
      call      _print
+     pop       RDI
+     mov       RSI,scratch
+     call      _printdu64bit
      mov       RSI,scr
      mov       RDI,1
      call      _nprint
+
      xor       RDI,RDI
      mov       RAX,60
      syscall
