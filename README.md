@@ -19,7 +19,8 @@ The generated programs can be found in `asm/`.
 For the latest source codes and pdf look at the
 [CI page](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/).
 
-If you want to generate the programs and socumentation youself go to [Full Build]().
+If you want to generate the programs and documentation youself go to
+[Full Build](https://github.com/uweplonus/meltdown#full-build).
 
 # Building Instructions
 
@@ -31,12 +32,14 @@ For building the samples you need the following packages installed:
 * make
 * nasm
 
-Next you have to decide, either [download]() or [clone]() the repository or get the [latest sources]() from the CI page.
+Next you have to decide, either [download](https://github.com/uweplonus/meltdown#download-repository) or
+[clone](https://github.com/uweplonus/meltdown#clone-repository) the repository or get the
+[latest sources](https://github.com/uweplonus/meltdown#build-from-latest-sources) from the CI page.
 
 ### Download Repository
 
 You can click on the button on the top right and select "Download ZIP". Then you can unzip the downloaded archive. After
-that continue with [Building Repository]().
+that continue with [Building Repository](https://github.com/uweplonus/meltdown#building-repository).
 
 ### Clone Repository
 
@@ -46,7 +49,7 @@ You can clone the repository with `git` (which must have been installed before)
 git clone https://github.com/uweplonus/meltdown.git
 ```
 
-Next continue with [Building Repository]().
+Next continue with [Building Repository](https://github.com/uweplonus/meltdown#building-repository).
 
 ### Building Repository
 
@@ -65,7 +68,7 @@ Go to the
 and download the `.asm` file you are interessted in. Alternatively you can
 [download all .asm files as zip](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/lastSuccessfulBuild/artifact/asm/*zip*/asm.zip).
 
-Go on with [Build Single .asm File]().
+Go on with [Build Single .asm File](https://github.com/uweplonus/meltdown#build-single-asm-file).
 
 ### Build Single .asm File
 
