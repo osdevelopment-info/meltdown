@@ -1,6 +1,6 @@
 bits 64
      global         _start
-     pagesize       equ  4096
+     pagesize       equ 4096
 
 section .rodata
      scr:           db 0x0a
@@ -47,7 +47,6 @@ _start:
      mov       RSI,scr
      mov       RDI,1
      call      _nprint
-
      xor       RDI,RDI
      mov       RAX,60
      syscall

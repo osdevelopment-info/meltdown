@@ -65,6 +65,8 @@
         Pentium\textsuperscript{\textregistered}~4}
 }
 
+\newtheorem{definition}{Definition}
+
 \begin{document}
 @
 
@@ -90,6 +92,34 @@ bits 64
      global         _start
      pagesize       equ 4096
 @ %def pagesize _start
+
+\section{Conventions}
+
+\subsection{Inroduction}
+
+In this section we define some convention that are specific for this document.
+
+\subsection{Data Sections}
+
+The data is divided into three parts: read-only data, initialized data and
+uninitialized data. Code chunks with this type of data will all have a defined
+sufficies.
+
+\begin{definition}
+Read-only data is data that is not modified during program execution. The suffix
+for read-only data is \textbf{-rodata}.
+\end{definition}
+
+\begin{definition}
+Initialized data is data that is changeable during program execution. The data
+is already initialized with data when the program starts. The suffix for
+initialized data is \textbf{-idata}.
+\end{definition}
+
+\begin{definition}
+Uninitialized data is data that is changeable during program execution. The data
+is not initialized. The suffix for uninitialized data is \textbf{-udata}.
+\end{definition}
 
 \chapter{Cache Access Timing}
 
@@ -168,7 +198,7 @@ First we need some area in memory with data which we can later read from. This
 data area goes into the area \verb|.bss| which contains uninitialized data. We
 align the data at a page boundary and reserve 2 pages for our data.
 
-<<cachetiming-uninitialized-data>>=
+<<cachetiming-udata>>=
      align          pagesize
      data:          times 2 resb pagesize
 @ %def data
@@ -180,15 +210,13 @@ From time to time we need a small scratch area so we define an area with
      scratch:       resb 32
 @ %def scratch
 
-<<cachetiming-uninitialized-data>>=
+<<cachetiming-udata>>=
 <<scratch-data>>
 @
 
-The program begins with the label \verb|_start| and is in the section
-\verb|.text|.
+The program begins with the label \verb|_start|.
 
 <<cachetiming-program>>=
-section .text
 _start:
 @
 
@@ -310,6 +338,12 @@ out with some explaining text.
      call      _nprint
 @
 
+At last we exit the program.
+
+<<cachetiming-program>>=
+<<exitProgram>>
+@
+
 Now we can put everything together and have our \verb|cachetiming| program that
 we can now execute.
 
@@ -320,11 +354,10 @@ section .rodata
 <<cachetiming-rodata>>
 
 section .bss
-<<cachetiming-uninitialized-data>>
+<<cachetiming-udata>>
 
+section .text
 <<cachetiming-program>>
-
-<<exitProgram>>
 
 <<calculate-cache-access-time>>
 
@@ -336,6 +369,13 @@ section .bss
 The program is placed in \verb|asm/|. With \verb|make| in the folder we can
 create an executable which is moved to \verb|bin/|. There we can execute this
 program.
+
+\begin{verbatim}
+$ ./cachetiming
+Cached Access Time: 72
+Uncached Access Time: 372
+$ 
+\end{verbatim}
 
 \section{Read Array via Cache Access Time}
 
@@ -350,14 +390,14 @@ For this we start with some data area that we can read later.
      datasize       equ 1024
 @
 
-<<cacheread-uninitialized-data>>=
+<<cacheread-udata>>=
      align          pagesize
      data:          resb datasize
 @
 
 Additionally we add a scratch area again.
 
-<<cacheread-uninitialized-data>>=
+<<cacheread-udata>>=
 <<scratch-data>>
 @
 
@@ -365,7 +405,6 @@ Additionally we add a scratch area again.
 TBD
 
 <<cacheread-program>>=
-section .text
 _start:
 @
 
@@ -376,8 +415,9 @@ TBD
 <<cacheread-preamble>>
 
 section .bss
-<<cacheread-uninitialized-data>>
+<<cacheread-udata>>
 
+section .text
 <<cacheread-program>>
 
 <<exitProgram>>

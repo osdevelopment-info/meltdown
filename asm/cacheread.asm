@@ -1,6 +1,6 @@
 bits 64
      global         _start
-     pagesize       equ  4096
+     pagesize       equ 4096
      datasize       equ 1024
 
 section .bss
