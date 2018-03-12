@@ -1,4 +1,4 @@
-[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=Assembly/Multi%20Meltdown/master)](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/)
+[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=Assembly/Meltdown/master)](https://ci.sw4j.net/jenkins/job/Assembly/job/Meltdown/job/master/)
 
 # Introduction
 
@@ -17,7 +17,7 @@ The main documentation is in the file
 The generated programs can be found in `asm/`.
 
 For the latest source codes and pdf look at the
-[CI page](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/).
+[CI page](https://ci.sw4j.net/jenkins/job/Assembly/job/Meltdown/job/master/).
 
 If you want to generate the programs and documentation youself go to
 [Full Build](https://github.com/uweplonus/meltdown#full-build).
@@ -64,9 +64,9 @@ You can then find the created executables in `bin/` in the repository.
 ### Build from Latest Sources
 
 Go to the
-[latest artifact page](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/lastSuccessfulBuild/artifact/asm/)
+[latest artifact page](https://ci.sw4j.net/jenkins/job/Assembly/job/Meltdown/job/master/lastSuccessfulBuild/artifact/asm/)
 and download the `.asm` file you are interessted in. Alternatively you can
-[download all .asm files as zip](https://ci.sw4j.net/jenkins/job/Assembly/job/Multi%20Meltdown/job/master/lastSuccessfulBuild/artifact/asm/*zip*/asm.zip).
+[download all .asm files as zip](https://ci.sw4j.net/jenkins/job/Assembly/job/Meltdown/job/master/lastSuccessfulBuild/artifact/asm/*zip*/asm.zip).
 
 Go on with [Build Single .asm File](https://github.com/uweplonus/meltdown#build-single-asm-file).
 
