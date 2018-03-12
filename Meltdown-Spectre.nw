@@ -95,14 +95,14 @@ bits 64
 
 \section{Conventions}
 
-\subsection{Inroduction}
+\subsection{Introduction}
 
 In this section we define some convention that are specific for this document.
 
 \subsection{Data Sections}
 
 The data is divided into three parts: read-only data, initialized data and
-uninitialized data. Code chunks with this type of data will all have a defined
+uninitialized data. Code chunks with this type of data will all have defined
 sufficies.
 
 \begin{definition}
@@ -200,7 +200,7 @@ align the data at a page boundary and reserve 2 pages for our data.
 
 <<cachetiming-udata>>=
      align          pagesize
-     data:          times 2 resb pagesize
+     data:          resb pagesize
 @ %def data
 
 From time to time we need a small scratch area so we define an area with
@@ -216,6 +216,7 @@ From time to time we need a small scratch area so we define an area with
 
 The program begins with the label \verb|_start|.
 
+\nextchunklabel{cachetiming-program-1}
 <<cachetiming-program>>=
 _start:
 @
@@ -223,27 +224,29 @@ _start:
 Now we start with initialising the [[data]] area with some random data. For this
 we load \verb|RDI| with the address of the [[data]] area.
 
+\nextchunklabel{cachetiming-program-2}
 <<cachetiming-program>>=
      mov       RDI,data
 @
 
 Next we load the number of bytes to fill into \verb|RSI|. For this we load the
-[[pagesize]] into \verb|RSI| and multiply it with $2$ by shifting the value
-1~bit to the left.
+[[pagesize]] into \verb|RSI|.
 
+\nextchunklabel{cachetiming-program-3}
 <<cachetiming-program>>=
      mov       RSI,pagesize
-     shl       RSI,1
 @
 
 At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc}
 and only use the lower 32~bit of the value.
 
+\nextchunklabel{cachetiming-program-4}
 <<cachetiming-program>>=
      rdtsc
      mov       EDX,EAX
 @
 
+\nextchunklabel{cachetiming-program-5}
 Now we call [[_xorshift]] to fill the [[data]] area.
 
 <<cachetiming-program>>=
@@ -395,17 +398,39 @@ For this we start with some data area that we can read later.
      data:          resb datasize
 @
 
-Additionally we add a scratch area again.
-
-<<cacheread-udata>>=
-<<scratch-data>>
-@
-
-
-TBD
+So start with the program and fill the [[data]] area with some random data
+(similar to the chunks \subpageref{cachetiming-program-1},
+\subpageref{cachetiming-program-2}, \subpageref{cachetiming-program-3},
+\subpageref{cachetiming-program-4} and \subpageref{cachetiming-program-5}).
 
 <<cacheread-program>>=
 _start:
+     mov       RDI,data
+     mov       RSI,pagesize
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
+@
+
+Next we will create a probe area that is \(256 * pagesize\). We only access the
+first byte of each page but we divide the data over such a large area (1 MiB)
+to ensure that the cache lines that we use do not interfere each other.
+
+<<cacheread-udata>>=
+     probe:         times 256 resb datasize
+@
+
+Next we fill this area also with some random data.
+
+<<cacheread-program>>=
+     mov       RDI,probe
+     mov       RAX,pagesize
+     mov       RCX,256
+     mul       RCX
+     mov       RSI,RCX
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
 @
 
 TBD

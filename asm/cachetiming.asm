@@ -9,14 +9,13 @@ section .rodata
 
 section .bss
      align          pagesize
-     data:          times 2 resb pagesize
+     data:          resb pagesize
      scratch:       resb 32
 
 section .text
 _start:
      mov       RDI,data
      mov       RSI,pagesize
-     shl       RSI,1
      rdtsc
      mov       EDX,EAX
      call      _xorshift

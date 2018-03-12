@@ -6,10 +6,23 @@ bits 64
 section .bss
      align          pagesize
      data:          resb datasize
-     scratch:       resb 32
+     probe:         times 256 resb datasize
 
 section .text
 _start:
+     mov       RDI,data
+     mov       RSI,pagesize
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
+     mov       RDI,probe
+     mov       RAX,pagesize
+     mov       RCX,256
+     mul       RCX
+     mov       RSI,RCX
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
 
      xor       RDI,RDI
      mov       RAX,60
