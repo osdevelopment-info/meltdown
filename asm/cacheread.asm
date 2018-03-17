@@ -44,6 +44,18 @@ _start:
      mov       RAX,60
      syscall
 
+_clear_cache:
+     cld
+     mov       RCX,256
+     xor       RAX,RAX
+.clear_next:
+     mul       RSI
+     clflush   [RDI+RAX]
+     add       RAX,RSI
+     loop      .clear_next
+     lfence
+     ret
+
 _calccachetime:
      lfence
      rdtsc
@@ -56,6 +68,20 @@ _calccachetime:
      shl       RDX,32
      add       RAX,RDX
      sub       RAX,R8
+     ret
+
+_calcareacachetime:
+     cld
+     xor       RCX,RCX
+.next_timing:
+     push      RCX
+     call      _calccachetime
+     pop       RCX
+     mov       [RDX+8*RCX],RAX
+     add       RDI,RSI
+     inc       RCX
+     cmp       RCX,256
+     jb        .next_timing
      ret
 
 _xorshift:
