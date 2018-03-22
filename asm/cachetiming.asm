@@ -1,6 +1,6 @@
 bits 64
 
-;   Meltdown and Spectre Samples Written in Assembly
+;   Meltdown and Spectre - Samples Written in Assembly
 ;   Copyright (C) 2018 U. Plonus
 ;
 ;   This program is free software: you can redistribute it and/or modify

