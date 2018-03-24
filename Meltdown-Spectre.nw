@@ -209,14 +209,14 @@ which contains uninitialized data. We align the data at a page boundary and rese
 
 From time to time we need a small scratch area so we define an area with 32~bytes.
 
-<<scratch-data>>=
+<<scratch-udata>>=
      scratch:       resb 32
 @ %def scratch
 
 <<cachetiming-udata>>=
      align          pagesize
 <<cache-data>>
-<<scratch-data>>
+<<scratch-udata>>
 @
 
 The program begins with the label \verb|_start|.
@@ -451,7 +451,7 @@ size.
 \end{labeling}
 
 <<clear-cache>>=
-_clear_cache:
+_clearcache:
      cld
      mov       RCX,256
      xor       RAX,RAX
@@ -461,10 +461,10 @@ _clear_cache:
      loop      .clear_next
      lfence
      ret
-@ %def _clear_cache
+@ %def _clearcache
 
 Next we need a subroutine that determines the cache line access times for the data in the [[probe]] area. So we create a
-subroutine that loops similar to the [[_clear_cache]] subroutine over all addresses and measures the cache access time
+subroutine that loops similar to the [[_clearcache]] subroutine over all addresses and measures the cache access time
 for each page.
 
 \paragraph{Parameters}
@@ -479,7 +479,13 @@ _calcareacachetime:
      xor       RCX,RCX
 .next_timing:
      push      RCX
+     push      RDX
+     push      RDI
+     push      RSI
      call      _calccachetime
+     pop       RSI
+     pop       RDI
+     pop       RDX
      pop       RCX
      mov       [RDX+8*RCX],RAX
      add       RDI,RSI
@@ -517,12 +523,15 @@ _detectbytebycl:
 .nextbyte:
      mov       RAX,[RDI+8*RCX]
      cmp       RAX,R8
-     ja        .nextbyte
-     mov       R8,RAX
-     mov       R9,RCX
+     jb        .foundbyte
      inc       RCX
      cmp       RCX,256
-     jb        .nextbyte
+     jae       .done
+.foundbyte
+     mov       R8,RAX
+     mov       R9,RCX
+     jmp       .nextbyte
+.done
      mov       RAX,R9
      ret
 @
@@ -548,9 +557,78 @@ First we create a area where we can store the read bytes.
 Now we create the subroutine that reads the bytes from the source array [[data]] and writes the results from the cache
 access time into [[readback]].
 
+First we setup a counter in \verb|R8| and clear the cache.
+
 <<cache-readback>>=
 _cachereadback:
+     xor       R8,R8
+.nextbyte:
+     push      R8
+     mov       RDI,probe
+     mov       RSI,pagesize
+     call      _clearcache
+     pop       R8
+@ %def _cachereadback
+
+Next we read in the data from the array.
+
+<<cache-readback>>=
+     mov       RSI,data
+     xor       RAX,RAX
+     mov       AL,[RSI+R8]
+@
+
+Next we use the read byte to index into our probe array.
+
+<<cache-readback>>=
+     mov       RDX,pagesize
+     mul       RDX
+     mov       RSI,probe
+     mov       AL,[RSI+RAX]
+@
+
+Now we have put data into the cache that depends on the value read from [[data]]. Next we will read the cache access
+times to determine the data read.
+
+<<cache-readback>>=
+     mov       RDI,probe
+     mov       RSI,pagesize
+     mov       RDX,timing
+     push      R8
+     call      _detectbytebycl
+     pop       R8
+@
+
+Next we store the read byte into our result array.
+
+<<cache-readback>>=
+     mov       RDI,result
+     mov       [RDI+R8],AL
+@
+
+Now we can increment our counter and check if there are more bytes to read. If no more bytes need to be read we leave
+our subroutine.
+
+<<cache-readback>>=
+     inc       R8
+     cmp       R8,pagesize
+     jb        .nextbyte
      ret
+@
+
+After all we can now call this new subroutine and read our data by detecting the cache access times.
+
+<<cacheread-program>>=
+     call      _cachereadback
+@
+
+Now we want to see the results so we now read a byte from the origin ([[data]]) and from our read back data
+([[readback]]). First we define some helpful data for colorizing the output.
+
+<<cacheread-rodata>>=
+     sbgred:        db 0x1b,"[1;41m",0x00
+     sresetstyle:   db 0x1b,"[0m",0x00
+     scr:           db 0x0a
 @
 
 TBD
@@ -563,6 +641,9 @@ section .bss
 <<cache-data>>
 <<cacheread-udata>>
 <<readback-udata>>
+
+section .data
+<<cacheread-rodata>>
 
 section .text
 <<cacheread-program>>

@@ -27,6 +27,11 @@ section .bss
      timing:        resq 256
      readback:      align pagesize, resb pagesize
 
+section .data
+     sbgred:        db 0x1b,"[1;41m",0x00
+     sresetstyle:   db 0x1b,"[0m",0x00
+     scr:           db 0x0a
+
 section .text
 _start:
      mov       RDI,data
@@ -42,15 +47,41 @@ _start:
      rdtsc
      mov       EDX,EAX
      call      _xorshift
+     call      _cachereadback
 
      xor       RDI,RDI
      mov       RAX,60
      syscall
 
 _cachereadback:
+     xor       R8,R8
+.nextbyte:
+     push      R8
+     mov       RDI,probe
+     mov       RSI,pagesize
+     call      _clearcache
+     pop       R8
+     mov       RSI,data
+     xor       RAX,RAX
+     mov       AL,[RSI+R8]
+     mov       RDX,pagesize
+     mul       RDX
+     mov       RSI,probe
+     mov       AL,[RSI+RAX]
+     mov       RDI,probe
+     mov       RSI,pagesize
+     mov       RDX,timing
+     push      R8
+     call      _detectbytebycl
+     pop       R8
+     mov       RDI,result
+     mov       [RDI+R8],AL
+     inc       R8
+     cmp       R8,pagesize
+     jb        .nextbyte
      ret
 
-_clear_cache:
+_clearcache:
      cld
      mov       RCX,256
      xor       RAX,RAX
@@ -79,7 +110,13 @@ _calcareacachetime:
      xor       RCX,RCX
 .next_timing:
      push      RCX
+     push      RDX
+     push      RDI
+     push      RSI
      call      _calccachetime
+     pop       RSI
+     pop       RDI
+     pop       RDX
      pop       RCX
      mov       [RDX+8*RCX],RAX
      add       RDI,RSI
@@ -99,12 +136,15 @@ _detectbytebycl:
 .nextbyte:
      mov       RAX,[RDI+8*RCX]
      cmp       RAX,R8
-     ja        .nextbyte
-     mov       R8,RAX
-     mov       R9,RCX
+     jb        .foundbyte
      inc       RCX
      cmp       RCX,256
-     jb        .nextbyte
+     jae       .done
+.foundbyte
+     mov       R8,RAX
+     mov       R9,RCX
+     jmp       .nextbyte
+.done
      mov       RAX,R9
      ret
 
