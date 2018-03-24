@@ -28,9 +28,9 @@ section .bss
      readback:      align pagesize, resb pagesize
 
 section .data
+     scr:           db 0x0a
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
-     scr:           db 0x0a
 
 section .text
 _start:
@@ -140,11 +140,11 @@ _detectbytebycl:
      inc       RCX
      cmp       RCX,256
      jae       .done
-.foundbyte
+.foundbyte:
      mov       R8,RAX
      mov       R9,RCX
      jmp       .nextbyte
-.done
+.done:
      mov       RAX,R9
      ret
 

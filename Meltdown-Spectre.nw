@@ -201,7 +201,7 @@ To measure the cache timing we create a standalone program that shows us the tim
 memory access.
 
 First we need some area in memory with data which we can later read from. This data area goes into the area \verb|.bss|
-which contains uninitialized data. We align the data at a page boundary and reserve 2 pages for our data.
+which contains uninitialized data. We align the data at a page boundary and reserve one pages for our data.
 
 <<cache-data>>=
      data:          resb pagesize
@@ -250,9 +250,9 @@ value.
      mov       EDX,EAX
 @
 
-\nextchunklabel{cachetiming-program-5}
 Now we call [[_xorshift]] to fill the [[data]] area.
 
+\nextchunklabel{cachetiming-program-5}
 <<cachetiming-program>>=
      call      _xorshift
 @
@@ -288,12 +288,18 @@ because it has not changed.
 Now we have the relative cache access time in register \verb|RAX|. We store this value to the stack and print out an
 explaining text.
 
-For this we define the text to print and (as a helper) a \gls{cr}.
+For this we define the text to print.
 
 <<cachetiming-rodata>>=
-     scr:           db 0x0a
+<<common-rodata>>
      scached:       db "Cached Access Time: ",0x00
-@ %def scached scr
+@ %def scached
+
+Additionally we define some helper data, in this case \gls{cr}.
+
+<<common-rodata>>=
+     scr:           db 0x0a
+@ %def scr
 
 Now we can print the text.
 
@@ -527,11 +533,11 @@ _detectbytebycl:
      inc       RCX
      cmp       RCX,256
      jae       .done
-.foundbyte
+.foundbyte:
      mov       R8,RAX
      mov       R9,RCX
      jmp       .nextbyte
-.done
+.done:
      mov       RAX,R9
      ret
 @
@@ -626,9 +632,9 @@ Now we want to see the results so we now read a byte from the origin ([[data]]) 
 ([[readback]]). First we define some helpful data for colorizing the output.
 
 <<cacheread-rodata>>=
+<<common-rodata>>
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
-     scr:           db 0x0a
 @
 
 TBD
