@@ -100,7 +100,6 @@ _xorshift:
      loop      .next_random
      ret
 
-
 _nprint:
      mov       RDX,RDI
      mov       RDI,1
@@ -156,4 +155,30 @@ _printdu64bit:
      mov       RSI,R8
      mov       RDI,RDX
      call      _nprint
+     ret
+
+_printh8bit:
+     xor       RAX,RAX
+     mov       AX,DI
+     xor       AH,AH
+     mov       R8,RAX
+     mov       RDI,RSI
+     cld
+     shr       AL,4
+     and       AL,0x0f
+     call      .printh4bit
+     mov       RAX,R8
+     and       AL,0x0f
+     call      .printh4bit
+     ret
+.printh4bit:
+     cmp       AL,10
+     jae       .printa2f
+     add       AL,'0'
+     jmp       .printout
+.printa2f:
+     sub       AL,10
+     add       AL,'a'
+.printout:
+     stosb
      ret
