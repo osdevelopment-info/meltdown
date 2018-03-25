@@ -53,6 +53,12 @@ _start:
      mov       RAX,60
      syscall
 
+_printcompare:
+     ret
+
+_printcompare16:
+     ret
+
 _cachereadback:
      xor       R8,R8
 .nextbyte:
