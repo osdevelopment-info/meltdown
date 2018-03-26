@@ -645,9 +645,6 @@ First we define some helpful data for colorizing the output.
 First we define a subroutine which prints out up to 16~bytes each side by side on the screen. If two bytes in the
 arrays are different then the value at the right side (from the second array) will be printed with read background.
 
-At the start of the subroutine we prepare a stack frame for further operations as we will need to save and restore the
-registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
-
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
 \item [RDI] the address of the first array
@@ -657,6 +654,12 @@ registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
 
 <<print-comparision16>>=
 _printcompare16:
+@
+
+At the start of the subroutine we prepare a stack frame for further operations as we will need to save and restore the
+registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
+
+<<print-comparision16>>=
      push      RBP
      mov       RBP,RSP
      sub       RSP,32
