@@ -639,21 +639,88 @@ First we define some helpful data for colorizing the output.
 <<common-rodata>>
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
+     sblank:        db " - ",0x00
 @ %def sbgred sresetstyle
 
-Next we define a subroutine which does the work.
+First we define a subroutine which prints out up to 16~bytes each side by side on the screen. If two bytes in the
+arrays are different then the value at the right side (from the second array) will be printed with read background.
 
-<<print-comparision>>=
-_printcompare:
-     ret
-@ %def _printcompare
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the address of the first array
+\item [RSI] the address of the second array
+\item [RDX] number of bytes to print (up to 16). If the value is above 16 then nothing is printed out
+\end{labeling}
 
 <<print-comparision16>>=
 _printcompare16:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,32
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     cmp       RDX,0x10
+     ja        .done
+     xor       RCX,RCX
+.nextbyteleft:
+     cmp       RCX,RDX
+     jb        .leftbytesdone
+     inc       RCX
+     jmp       .nextbyteleft
+.leftbytesdone:
+     cmp       RCX,0x10
+     jb        .leftdone
+     inc       RCX
+     jmp       .leftbytesdone
+.leftdone:
+     mov       RDI,sblank
+     call      _print
+     mov       RDX,[RBP-24]
+     xor       RCX,RCX
+.nextbyteright:
+     cmp       RCX,RDX
+     jb        .rightbytesdone
+     inc       RCX
+     jmp       .nextbyteright
+.rightbytesdone:
+     cmp       RCX,0x10
+     jb        .rightdone
+     inc       RCX
+     jmp       .rightbytesdone
+.rightdone:
+.done:
+     mov       RDI,1
+     mov       RSI,scr
+     call      _nprint
+     mov       RSP,RBP
+     pop       RBP
      ret
 @ %def _printcompare16
 
 TBD
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the address of the first array
+\item [RSI] the address of the second array
+\item [RDX] number of bytes to print. In each line 16~bytes from the first and 16~bytes from the right side are printed
+\end{labeling}
+
+<<print-comparision>>=
+_printcompare:
+     call      _printcompare16
+     ret
+@ %def _printcompare
+
+TBD
+
+<<cacheread-program>>=
+     mov       RDI,data
+     mov       RSI,readback
+     mov       RDX,16
+     call      _printcompare
+@
 
 <<cacheread.asm>>=
 <<preamble>>
