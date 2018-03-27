@@ -1,14 +1,21 @@
 pipeline {
-  agent {
-    dockerfile true
-  }
+  agent any
   stages {
+    stage('Cleanup') {
+      steps {
+        deleteDir()
+      }
+    }
     stage('Checkout') {
       steps {
         checkout scm
+        sh script: 'ls -l . asm/'
       }
     }
     stage('Build') {
+      agent {
+        dockerfile true
+      }
       steps {
         sh script: 'make'
         sh script: 'make pdf'
