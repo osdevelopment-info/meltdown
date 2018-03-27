@@ -31,6 +31,7 @@ section .data
      scr:           db 0x0a
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
+     sblank:        db " - ",0x00
 
 section .text
 _start:
@@ -48,15 +49,61 @@ _start:
      mov       EDX,EAX
      call      _xorshift
      call      _cachereadback
+     mov       RDI,data
+     mov       RSI,readback
+     mov       RDX,16
+     call      _printcompare
 
      xor       RDI,RDI
      mov       RAX,60
      syscall
 
 _printcompare:
+     call      _printcompare16
      ret
 
 _printcompare16:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,32
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     cmp       RDX,0x10
+     ja        .done
+     xor       RCX,RCX
+.nextbyteleft:
+     cmp       RCX,RDX
+     jb        .leftbytesdone
+     inc       RCX
+     jmp       .nextbyteleft
+.leftbytesdone:
+     cmp       RCX,0x10
+     jb        .leftdone
+     inc       RCX
+     jmp       .leftbytesdone
+.leftdone:
+     mov       RDI,sblank
+     call      _print
+     mov       RDX,[RBP-24]
+     xor       RCX,RCX
+.nextbyteright:
+     cmp       RCX,RDX
+     jb        .rightbytesdone
+     inc       RCX
+     jmp       .nextbyteright
+.rightbytesdone:
+     cmp       RCX,0x10
+     jb        .rightdone
+     inc       RCX
+     jmp       .rightbytesdone
+.rightdone:
+.done:
+     mov       RDI,1
+     mov       RSI,scr
+     call      _nprint
+     mov       RSP,RBP
+     pop       RBP
      ret
 
 _cachereadback:

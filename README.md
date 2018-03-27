@@ -1,4 +1,4 @@
-[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=Assembly/Meltdown/master)](https://ci.sw4j.net/jenkins/job/Assembly/job/Meltdown/job/master/)
+[![Build Status](https://ci.sw4j.net/jenkins/buildStatus/icon?job=osdevelopment.info/meltdown/master)](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/)
 
 # Introduction
 
