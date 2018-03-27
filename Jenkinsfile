@@ -43,7 +43,7 @@ pipeline {
             git checkout ${GIT_BRANCH}
             cp ../*.pdf .
             cp ../asm/*.asm asm/
-            git commit -am 'Update program code and documentation'
+            git diff --quiet && git diff --staged --quiet || git commit -am 'Update program code and documentation'
             git push
             cd ..
             rm -rf checkout
