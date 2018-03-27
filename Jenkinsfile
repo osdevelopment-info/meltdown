@@ -1,20 +1,14 @@
 pipeline {
-  agent any
+  agent {
+    dockerfile true
+  }
   stages {
-    stage('Cleanup') {
-      steps {
-        deleteDir()
-      }
-    }
     stage('Checkout') {
       steps {
         checkout scm
       }
     }
     stage('Build') {
-      agent {
-        dockerfile true
-      }
       steps {
         sh script: 'make'
         sh script: 'make pdf'
