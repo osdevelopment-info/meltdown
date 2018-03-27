@@ -1,5 +1,7 @@
 pipeline {
-  agent any
+  agent {
+    label 'master'
+  }
   stages {
     stage('Cleanup') {
       steps {
@@ -15,6 +17,7 @@ pipeline {
     stage('Build') {
       agent {
         dockerfile true
+        reuseNode true
       }
       steps {
         sh script: 'make'
