@@ -668,6 +668,9 @@ registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
      mov       [RBP-24],RDX
 @
 
+Next we can start and handle the "left" side of the output. If we have to output 16~bytes then all will be output else
+we go on to \verb|.leftbytesdone| (\subpageref{print-comparision16-1}).
+
 <<print-comparision16>>=
      cmp       RDX,0x10
      ja        .done
@@ -677,6 +680,10 @@ registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
      jb        .leftbytesdone
      inc       RCX
      jmp       .nextbyteleft
+@
+
+\nextchunklabel{print-comparision16-1}
+<<print-comparision16>>=
 .leftbytesdone:
      cmp       RCX,0x10
      jb        .leftdone
