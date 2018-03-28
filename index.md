@@ -8,8 +8,8 @@ It contains some programs that try to reproduce the vulnerabilities described.
 All programs are designed to run under Linux x86-64.
 
 The main documentation is in the file
-[Meltdown-Spectre.pdf](https://github.com/osdevelopment-info/meltdown/blob/gh-pages/Meltdown-Spectre.pdf) which is the
-result of [literate programming](https://en.wikipedia.org/wiki/Literate_programming). The source for this is the file
+[Meltdown-Spectre.pdf](Meltdown-Spectre.pdf) which is the result of
+[literate programming](https://en.wikipedia.org/wiki/Literate_programming). The source for this is the file
 [Meltdown-Spectre.nw](https://github.com/uweplonus/meltdown/blob/master/Meltdown-Spectre.nw).
 
 The generated programs can be found in `asm/`.
