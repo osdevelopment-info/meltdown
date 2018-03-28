@@ -25,13 +25,15 @@ section .bss
      probe:         times 256 resb pagesize
      result:        resb pagesize
      timing:        resq 256
+     scratch:       resb 64
      readback:      align pagesize, resb pagesize
 
 section .data
      scr:           db 0x0a
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
-     sblank:        db " - ",0x00
+     sseparator:    db "- ",0x00
+     sblank:        db " "
 
 section .text
 _start:
@@ -74,27 +76,37 @@ _printcompare16:
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     jb        .leftbytesdone
+     ja        .leftbytesdone
+     mov       [RBP-32],RCX
+     mov       DI,[RDI+RCX]
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       RDI,1
+     mov       RSI,sblank
+     call      _nprint
+     mov       RDI,[RBP-8]
+     mov       RDX,[RBP-24]
+     mov       RCX,[RBP-32]
      inc       RCX
      jmp       .nextbyteleft
 .leftbytesdone:
      cmp       RCX,0x10
-     jb        .leftdone
+     jae       .leftdone
      inc       RCX
      jmp       .leftbytesdone
 .leftdone:
-     mov       RDI,sblank
+     mov       RDI,sseparator
      call      _print
      mov       RDX,[RBP-24]
      xor       RCX,RCX
 .nextbyteright:
      cmp       RCX,RDX
-     jb        .rightbytesdone
+     ja        .rightbytesdone
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
      cmp       RCX,0x10
-     jb        .rightdone
+     jae       .rightdone
      inc       RCX
      jmp       .rightbytesdone
 .rightdone:
@@ -290,6 +302,8 @@ _printh8bit:
      mov       RAX,R8
      and       AL,0x0f
      call      .printh4bit
+     mov       RDI,2
+     call      _nprint
      ret
 .printh4bit:
      cmp       AL,10

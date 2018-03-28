@@ -170,6 +170,8 @@ _printh8bit:
      mov       RAX,R8
      and       AL,0x0f
      call      .printh4bit
+     mov       RDI,2
+     call      _nprint
      ret
 .printh4bit:
      cmp       AL,10

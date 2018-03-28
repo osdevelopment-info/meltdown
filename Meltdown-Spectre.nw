@@ -639,8 +639,9 @@ First we define some helpful data for colorizing the output.
 <<common-rodata>>
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
-     sblank:        db " - ",0x00
-@ %def sbgred sresetstyle
+     sseparator:    db "- ",0x00
+     sblank:        db " "
+@ %def sbgred sresetstyle sseparator
 
 First we define a subroutine which prints out up to 16~bytes each side by side on the screen. If two bytes in the
 arrays are different then the value at the right side (from the second array) will be printed with read background.
@@ -654,6 +655,12 @@ arrays are different then the value at the right side (from the second array) wi
 
 <<print-comparision16>>=
 _printcompare16:
+@ %def _printcompare16
+
+Additionally we need some scratch area for the printing.
+
+<<cacheread-udata>>=
+     scratch:       resb 64
 @
 
 At the start of the subroutine we prepare a stack frame for further operations as we will need to save and restore the
@@ -668,16 +675,32 @@ registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
      mov       [RBP-24],RDX
 @
 
-Next we can start and handle the "left" side of the output. We output up to 16~bytes and the continue at
-\verb|.leftbytesdone| (\subpageref{print-comparision16-1}).
+Now we first start and check that no more than 16~bytes should be printed, otherwise we will end the subroutine
+immediately.
 
 <<print-comparision16>>=
      cmp       RDX,0x10
      ja        .done
+@
+
+Next we can start and handle the "left" side of the output. We output up to 16~bytes and then continue at
+\verb|.leftbytesdone| (\subpageref{print-comparision16-1}).
+
+<<print-comparision16>>=
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     jb        .leftbytesdone
+     ja        .leftbytesdone
+     mov       [RBP-32],RCX
+     mov       DI,[RDI+RCX]
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       RDI,1
+     mov       RSI,sblank
+     call      _nprint
+     mov       RDI,[RBP-8]
+     mov       RDX,[RBP-24]
+     mov       RCX,[RBP-32]
      inc       RCX
      jmp       .nextbyteleft
 @
@@ -686,22 +709,22 @@ Next we can start and handle the "left" side of the output. We output up to 16~b
 <<print-comparision16>>=
 .leftbytesdone:
      cmp       RCX,0x10
-     jb        .leftdone
+     jae       .leftdone
      inc       RCX
      jmp       .leftbytesdone
 .leftdone:
-     mov       RDI,sblank
+     mov       RDI,sseparator
      call      _print
      mov       RDX,[RBP-24]
      xor       RCX,RCX
 .nextbyteright:
      cmp       RCX,RDX
-     jb        .rightbytesdone
+     ja        .rightbytesdone
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
      cmp       RCX,0x10
-     jb        .rightdone
+     jae       .rightdone
      inc       RCX
      jmp       .rightbytesdone
 .rightdone:
@@ -712,7 +735,7 @@ Next we can start and handle the "left" side of the output. We output up to 16~b
      mov       RSP,RBP
      pop       RBP
      ret
-@ %def _printcompare16
+@
 
 TBD
 
@@ -1101,6 +1124,8 @@ Next we restore the number and print out the lower 4~bits.
      mov       RAX,R8
      and       AL,0x0f
      call      .printh4bit
+     mov       RDI,2
+     call      _nprint
      ret
 <<printh8bit.printh4bit>>
 @
