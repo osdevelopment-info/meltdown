@@ -38,6 +38,7 @@ pipeline {
       when {
         environment name: 'CHANGE_FORK', value: ''
         expression { GIT_URL ==~ 'https://github.com/osdevelopment-info/.*' }
+        expression { GIT_BRANCH ==~ 'master' }
         expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
       }
       steps {
@@ -49,7 +50,7 @@ pipeline {
             git config --add user.name "CI Jenkins"
             git config push.default simple
             cd checkout
-            git checkout ${GIT_BRANCH}
+            git checkout gh-pages
             ls -l .. ../asm/
             cp ../*.pdf .
             cp ../asm/*.asm asm/
