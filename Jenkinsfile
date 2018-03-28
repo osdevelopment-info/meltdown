@@ -16,7 +16,7 @@ pipeline {
         sh script: 'ls -l . asm/'
       }
     }
-    stage('Build') {
+    stage('Build asm and pdf') {
       agent {
         dockerfile {
           reuseNode true
@@ -28,13 +28,13 @@ pipeline {
         sh script: 'ls -l . asm/'
       }
     }
-    stage('Archive') {
+    stage('Archive Artifacts') {
       steps {
         archiveArtifacts 'asm/*.asm'
         archiveArtifacts 'Meltdown-Spectre.pdf'
       }
     }
-    stage('Update Repository') {
+    stage('Update gh-pages from master') {
       when {
         environment name: 'CHANGE_FORK', value: ''
         expression { GIT_URL ==~ 'https://github.com/osdevelopment-info/.*' }
