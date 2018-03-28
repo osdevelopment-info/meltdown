@@ -34,6 +34,7 @@ section .data
      sresetstyle:   db 0x1b,"[0m",0x00
      sseparator:    db "- ",0x00
      sblank:        db " "
+     semptybyte:    db "   ",0x00
 
 section .text
 _start:
@@ -53,7 +54,6 @@ _start:
      call      _cachereadback
      mov       RDI,data
      mov       RSI,readback
-     mov       RDX,16
      call      _printcompare
 
      xor       RDI,RDI
@@ -61,6 +61,7 @@ _start:
      syscall
 
 _printcompare:
+     mov       RDX,16
      call      _printcompare16
      ret
 
@@ -76,7 +77,7 @@ _printcompare16:
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     ja        .leftbytesdone
+     jae       .leftbytesdone
      mov       [RBP-32],RCX
      mov       DI,[RDI+RCX]
      mov       RSI,scratch
@@ -92,6 +93,8 @@ _printcompare16:
 .leftbytesdone:
      cmp       RCX,0x10
      jae       .leftdone
+     mov       RDI,semptybyte
+     call      _print
      inc       RCX
      jmp       .leftbytesdone
 .leftdone:
@@ -101,7 +104,7 @@ _printcompare16:
      xor       RCX,RCX
 .nextbyteright:
      cmp       RCX,RDX
-     ja        .rightbytesdone
+     jae       .rightbytesdone
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:

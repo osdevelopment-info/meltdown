@@ -641,7 +641,8 @@ First we define some helpful data for colorizing the output.
      sresetstyle:   db 0x1b,"[0m",0x00
      sseparator:    db "- ",0x00
      sblank:        db " "
-@ %def sbgred sresetstyle sseparator
+     semptybyte:    db "   ",0x00
+@ %def sbgred sresetstyle sseparator sblank
 
 First we define a subroutine which prints out up to 16~bytes each side by side on the screen. If two bytes in the
 arrays are different then the value at the right side (from the second array) will be printed with read background.
@@ -690,7 +691,7 @@ Next we can start and handle the "left" side of the output. We output up to 16~b
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     ja        .leftbytesdone
+     jae       .leftbytesdone
      mov       [RBP-32],RCX
      mov       DI,[RDI+RCX]
      mov       RSI,scratch
@@ -705,21 +706,33 @@ Next we can start and handle the "left" side of the output. We output up to 16~b
      jmp       .nextbyteleft
 @
 
+Now we fill up the space so that the space of 16~bytes is occupied.
+
 \nextchunklabel{print-comparision16-1}
 <<print-comparision16>>=
 .leftbytesdone:
      cmp       RCX,0x10
      jae       .leftdone
+     mov       RDI,semptybyte
+     call      _print
      inc       RCX
      jmp       .leftbytesdone
 .leftdone:
+@
+
+Next we print out the separator between the two compare block.
+
+<<print-comparision16>>=
      mov       RDI,sseparator
      call      _print
+@
+
+<<print-comparision16>>=
      mov       RDX,[RBP-24]
      xor       RCX,RCX
 .nextbyteright:
      cmp       RCX,RDX
-     ja        .rightbytesdone
+     jae       .rightbytesdone
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
@@ -748,6 +761,7 @@ TBD
 
 <<print-comparision>>=
 _printcompare:
+     mov       RDX,16
      call      _printcompare16
      ret
 @ %def _printcompare
@@ -757,7 +771,6 @@ TBD
 <<cacheread-program>>=
      mov       RDI,data
      mov       RSI,readback
-     mov       RDX,16
      call      _printcompare
 @
 
