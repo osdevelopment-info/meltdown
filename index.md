@@ -12,12 +12,19 @@ The main documentation is in the file
 [literate programming](https://en.wikipedia.org/wiki/Literate_programming). The source for this is the file
 [Meltdown-Spectre.nw](https://github.com/uweplonus/meltdown/blob/master/Meltdown-Spectre.nw).
 
-The generated programs can be found in `asm/`.
+# Work in Progess
+
+This is a work in progress therefore not all source code gives the expected results.
+
+The following source codes are working as intended
+
+* [cacheread.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cacheread.asm)
 
 For the latest source codes and pdf look at the
-[CI page](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/).
+[CI page](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/). The pdf must be downloaded as a
+viewing on the page (even with a browser integrated pdf reader) does not work.
 
-If you want to generate the programs and documentation youself go to [Full Build](#full-build).
+If you want to generate the programs and documentation yourself go to [Full Build](#full-build).
 
 # Building Instructions
 
@@ -34,9 +41,9 @@ Next you have to decide, either [download](#download-repository) or [clone](#clo
 
 ### Download Repository
 
-You can click on the button on the top right of the [repository page](https://github.com/osdevelopment-info/meltdown)
-and select "Download ZIP". Then you can unzip the downloaded archive. After that continue with
-[Building Repository](#building-repository).
+You can click on the button "Clone or download" on the top right of the
+[repository page](https://github.com/osdevelopment-info/meltdown) and select "Download ZIP". Then you can unzip the
+downloaded archive. After that continue with [Building Repository](#building-repository).
 
 ### Clone Repository
 
