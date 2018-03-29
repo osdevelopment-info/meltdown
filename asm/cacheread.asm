@@ -26,7 +26,7 @@ section .bss
      result:        resb pagesize
      timing:        resq 256
      scratch:       resb 64
-     readback:      align pagesize, resb pagesize
+;     readback:      align pagesize, resb pagesize
 
 section .data
      scr:           db 0x0a
@@ -53,7 +53,7 @@ _start:
      call      _xorshift
      call      _cachereadback
      mov       RDI,data
-     mov       RSI,readback
+     mov       RSI,result
      call      _printcompare
 
      xor       RDI,RDI
@@ -72,14 +72,17 @@ _printcompare16:
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
      mov       [RBP-24],RDX
+     push      R12
      cmp       RDX,0x10
      ja        .done
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     jae       .leftbytesdone
      mov       [RBP-32],RCX
-     mov       DI,[RDI+RCX]
+     jae       .leftbytesdone
+     mov       AL,[RDI+RCX]
+     xor       AH,AH
+     mov       DI,AX
      mov       RSI,scratch
      call      _printh8bit
      mov       RDI,1
@@ -100,11 +103,41 @@ _printcompare16:
 .leftdone:
      mov       RDI,sseparator
      call      _print
+     mov       RDI,[RBP-8]
+     mov       RSI,[RBP-16]
      mov       RDX,[RBP-24]
      xor       RCX,RCX
 .nextbyteright:
+     mov       [RBP-32],RCX
      cmp       RCX,RDX
      jae       .rightbytesdone
+     mov       AL,[RSI+RCX]
+     mov       AH,[RDI+RCX]
+     mov       R12W,AX
+     cmp       AH,AL
+     je        .printplain
+     mov       RDI,sbgred
+     call      _print
+.printplain:
+     xor       RDI,RDI
+     mov       AX,R12W
+     xor       AH,AH
+     mov       DI,AX
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       AX,R12W
+     cmp       AH,AL
+     je        .printdone
+     mov       RDI,sresetstyle
+     call      _print
+.printdone:
+     mov       RDI,1
+     mov       RSI,sblank
+     call      _nprint
+     mov       RDI,[RBP-8]
+     mov       RSI,[RBP-16]
+     mov       RDX,[RBP-24]
+     mov       RCX,[RBP-32]
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
@@ -114,9 +147,12 @@ _printcompare16:
      jmp       .rightbytesdone
 .rightdone:
 .done:
+     mov       RDI,sresetstyle
+     call      _print
      mov       RDI,1
      mov       RSI,scr
      call      _nprint
+     pop       R12
      mov       RSP,RBP
      pop       RBP
      ret
@@ -157,7 +193,7 @@ _clearcache:
      clflush   [RDI+RAX]
      add       RAX,RSI
      loop      .clear_next
-     lfence
+;     lfence
      ret
 
 _calccachetime:
@@ -182,6 +218,14 @@ _calcareacachetime:
      push      RDI
      push      RSI
      call      _calccachetime
+     push      RAX
+     mov       RDI,RAX
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RDI,1
+     mov       RSI,scr
+     call      _nprint
+     pop       RAX
      pop       RSI
      pop       RDI
      pop       RDX
@@ -208,6 +252,7 @@ _detectbytebycl:
      inc       RCX
      cmp       RCX,256
      jae       .done
+     jmp       .nextbyte
 .foundbyte:
      mov       R8,RAX
      mov       R9,RCX

@@ -180,6 +180,11 @@ whether the memory location is accessed before or not.
 from memory
 \end{labeling}
 
+\paragraph{Return}
+\begin{labeling}{[XXX-XXX]}
+\item [RAX] the relative time of the cache access
+\end{labeling}
+
 <<calculate-cache-access-time>>=
 _calccachetime:
      lfence
@@ -489,6 +494,14 @@ _calcareacachetime:
      push      RDI
      push      RSI
      call      _calccachetime
+     push      RAX
+     mov       RDI,RAX
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RDI,1
+     mov       RSI,scr
+     call      _nprint
+     pop       RAX
      pop       RSI
      pop       RDI
      pop       RDX
@@ -533,6 +546,7 @@ _detectbytebycl:
      inc       RCX
      cmp       RCX,256
      jae       .done
+     jmp       .nextbyte
 .foundbyte:
      mov       R8,RAX
      mov       R9,RCX
@@ -557,7 +571,7 @@ We now create a subroutine to loop over the memory we want to read and read the 
 First we create a area where we can store the read bytes.
 
 <<readback-udata>>=
-     readback:      align pagesize, resb pagesize
+;     readback:      align pagesize, resb pagesize
 @ %def readback
 
 Now we create the subroutine that reads the bytes from the source array [[data]] and writes the results from the cache
@@ -665,7 +679,8 @@ Additionally we need some scratch area for the printing.
 @
 
 At the start of the subroutine we prepare a stack frame for further operations as we will need to save and restore the
-registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
+registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times. Additionally we store \verb|R12| to the
+stack to use this register as scratch register.
 
 <<print-comparision16>>=
      push      RBP
@@ -674,6 +689,7 @@ registers \verb|RDI|, \verb|RSI|, \verb|RDX| and \verb|RCX| multiple times
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
      mov       [RBP-24],RDX
+     push      R12
 @
 
 Now we first start and check that no more than 16~bytes should be printed, otherwise we will end the subroutine
@@ -691,9 +707,11 @@ Next we can start and handle the "left" side of the output. We output up to 16~b
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
-     jae       .leftbytesdone
      mov       [RBP-32],RCX
-     mov       DI,[RDI+RCX]
+     jae       .leftbytesdone
+     mov       AL,[RDI+RCX]
+     xor       AH,AH
+     mov       DI,AX
      mov       RSI,scratch
      call      _printh8bit
      mov       RDI,1
@@ -727,24 +745,68 @@ Next we print out the separator between the two compare block.
      call      _print
 @
 
+To print the second half (for comparision) we restore the values of the parameters first.
+
 <<print-comparision16>>=
+     mov       RDI,[RBP-8]
+     mov       RSI,[RBP-16]
      mov       RDX,[RBP-24]
+@
+
+Now we compare each byte with the original value first and then print it out. If the value differs from the original
+value we additionally mark the byte.
+
+<<print-comparision16>>=
      xor       RCX,RCX
 .nextbyteright:
+     mov       [RBP-32],RCX
      cmp       RCX,RDX
      jae       .rightbytesdone
+     mov       AL,[RSI+RCX]
+     mov       AH,[RDI+RCX]
+     mov       R12W,AX
+     cmp       AH,AL
+     je        .printplain
+     mov       RDI,sbgred
+     call      _print
+.printplain:
+     xor       RDI,RDI
+     mov       AX,R12W
+     xor       AH,AH
+     mov       DI,AX
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       AX,R12W
+     cmp       AH,AL
+     je        .printdone
+     mov       RDI,sresetstyle
+     call      _print
+.printdone:
+     mov       RDI,1
+     mov       RSI,sblank
+     call      _nprint
+     mov       RDI,[RBP-8]
+     mov       RSI,[RBP-16]
+     mov       RDX,[RBP-24]
+     mov       RCX,[RBP-32]
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
+@
+
+<<print-comparision16>>=
      cmp       RCX,0x10
      jae       .rightdone
      inc       RCX
      jmp       .rightbytesdone
 .rightdone:
 .done:
+     mov       RDI,sresetstyle
+     call      _print
      mov       RDI,1
      mov       RSI,scr
      call      _nprint
+     pop       R12
      mov       RSP,RBP
      pop       RBP
      ret
@@ -770,7 +832,7 @@ TBD
 
 <<cacheread-program>>=
      mov       RDI,data
-     mov       RSI,readback
+     mov       RSI,result
      call      _printcompare
 @
 
