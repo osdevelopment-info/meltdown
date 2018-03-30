@@ -228,14 +228,14 @@ _start:
 Now we start with initialising the [[data]] area with some random data. For this we load \verb|RDI| with the address of
 the [[data]] area.
 
-\nextchunklabel{cachetiming-program-2}
+\nextchunklabel{init-random-data-1}
 <<init-random-data>>=
      mov       RDI,data
 @
 
 Next we load the number of bytes to fill into \verb|RSI|. For this we load the [[pagesize]] into \verb|RSI|.
 
-\nextchunklabel{cachetiming-program-3}
+\nextchunklabel{init-random-data-2}
 <<init-random-data>>=
      mov       RSI,pagesize
 @
@@ -243,7 +243,7 @@ Next we load the number of bytes to fill into \verb|RSI|. For this we load the [
 At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc} and only use the lower 32~bit of the
 value.
 
-\nextchunklabel{cachetiming-program-4}
+\nextchunklabel{init-random-data-3}
 <<init-random-data>>=
      rdtsc
      mov       EDX,EAX
@@ -251,14 +251,13 @@ value.
 
 Now we call [[_xorshift]] to fill the [[data]] area.
 
-\nextchunklabel{cachetiming-program-5}
+\nextchunklabel{init-random-data-4}
 <<init-random-data>>=
      call      _xorshift
 @
 
-Now we add this data initialization to our program.
+Now we add this [[data]] initialization to our program.
 
-\nextchunklabel{cachetiming-program-1}
 <<cachetiming-program>>=
 <<init-random-data>>
 @
@@ -405,7 +404,57 @@ We have seen that we can determine if the content of a memory address is in the 
 
 So next we try to read a single byte from the memory by only detecting the cache access time.
 
-For this we will create a [[probe]] array and fill it with some random data.
+For this we will create a [[probe]] array.
+
+<<probe-udata>>=
+     alignb         pagesize
+     probe          times 256 resb pagesize
+@ %def probe
+
+Next we will fill this [[probe]] array with some random data (similar to the chunks for [[data]]
+\subpageref{init-random-data-1}, \subpageref{init-random-data-2}, \subpageref{init-random-data-3} and
+\subpageref{init-random-data-4}).
+
+<<init-random-probe>>=
+     mov       RDI,probe
+     mov       RSI,pagesize
+     shl       RSI,8
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
+@
+
+Now we add the initialization of the [[data]] and [[probe]] area to the program.
+
+<<cachereadbyte-program>>=
+_start:
+<<init-random-data>>
+<<init-random-probe>>
+@
+
+At last we exit the program.
+
+<<cachereadbyte-program>>=
+<<exitProgram>>
+@
+
+<<cachereadbyte.asm>>=
+<<preamble>>
+
+section .rodata
+
+section .bss
+<<cache-udata>>
+<<probe-udata>>
+<<scratch-udata>>
+
+section .text
+<<cachereadbyte-program>>
+
+<<xorshift-prng>>
+
+<<utilities>>
+@
 
 \section{Read Array via Cache Access Time}
 
@@ -418,9 +467,7 @@ Now that we have seen that we can determine if a value was in the cache or not (
 
 For this we start with some [[data]] area that we can read later as defined before.
 
-So start with the program and fill the [[data]] area with some random data (similar to the chunks
-\subpageref{cachetiming-program-1}, \subpageref{cachetiming-program-2}, \subpageref{cachetiming-program-3},
-\subpageref{cachetiming-program-4} and \subpageref{cachetiming-program-5}).
+So start with the program and fill the [[data]] area with some random data.
 
 <<cacheread-program>>=
 _start:

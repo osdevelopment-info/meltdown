@@ -5,7 +5,7 @@ LD_OPTS = -melf_x86_64
 
 all: build install
 
-build: cachetiming cacheread
+build: cachetiming cachereadbyte cacheread
 
 cachetiming.asm: ../Meltdown-Spectre.nw
 	notangle -Rcachetiming.asm ../Meltdown-Spectre.nw > cachetiming.asm
@@ -15,6 +15,15 @@ cachetiming.o: cachetiming.asm
 
 cachetiming: cachetiming.o
 	$(LD) $(LD_OPTS) -o cachetiming cachetiming.o
+
+cachereadbyte.asm: ../Meltdown-Spectre.nw
+	notangle -Rcachereadbyte.asm ../Meltdown-Spectre.nw > cachereadbyte.asm
+
+cachereadbyte.o: cachereadbyte.asm
+	$(NASM) $(NASM_OPTS) cachereadbyte.asm -l cachereadbyte.lst -o cachereadbyte.o
+
+cachereadbyte: cachereadbyte.o
+	$(LD) $(LD_OPTS) -o cachereadbyte cachereadbyte.o
 
 cacheread.asm: ../Meltdown-Spectre.nw
 	notangle -Rcacheread.asm ../Meltdown-Spectre.nw > cacheread.asm
@@ -27,6 +36,7 @@ cacheread: cacheread.o
 
 install:
 	mv cachetiming ../bin/
+	mv cachereadbyte ../bin/
 	mv cacheread ../bin/
 
 clean:
