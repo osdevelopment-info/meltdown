@@ -21,6 +21,7 @@ bits 64
 
 section .bss
      align          pagesize
+     alignb         pagesize
      data:          resb pagesize
      probe:         times 256 resb pagesize
      result:        resb pagesize
@@ -29,7 +30,7 @@ section .bss
 ;     readback:      align pagesize, resb pagesize
 
 section .data
-     scr:           db 0x0a
+     slf:           db 0x0a
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
      sseparator:    db "- ",0x00
@@ -150,7 +151,7 @@ _printcompare16:
      mov       RDI,sresetstyle
      call      _print
      mov       RDI,1
-     mov       RSI,scr
+     mov       RSI,slf
      call      _nprint
      pop       R12
      mov       RSP,RBP
@@ -193,7 +194,7 @@ _clearcache:
      clflush   [RDI+RAX]
      add       RAX,RSI
      loop      .clear_next
-;     lfence
+     lfence
      ret
 
 _calccachetime:
@@ -223,7 +224,7 @@ _calcareacachetime:
      mov       RSI,scratch
      call      _printdu64bit
      mov       RDI,1
-     mov       RSI,scr
+     mov       RSI,slf
      call      _nprint
      pop       RAX
      pop       RSI

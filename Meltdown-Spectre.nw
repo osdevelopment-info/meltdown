@@ -38,7 +38,7 @@
 
 \glsunset{ascii}
 
-\newacronym{cr}{CR}{carriage return}
+\newacronym{lf}{LF}{line feed}
 
 \newglossaryentry{x86}{
     name=x86,
@@ -208,7 +208,8 @@ memory access.
 First we need some area in memory with data which we can later read from. This data area goes into the area \verb|.bss|
 which contains uninitialized data. We align the data at a page boundary and reserve one pages for our data.
 
-<<cache-data>>=
+<<cache-udata>>=
+     alignb         pagesize
      data:          resb pagesize
 @ %def data
 
@@ -218,15 +219,8 @@ From time to time we need a small scratch area so we define an area with 32~byte
      scratch:       resb 32
 @ %def scratch
 
-<<cachetiming-udata>>=
-     align          pagesize
-<<cache-data>>
-<<scratch-udata>>
-@
-
 The program begins with the label \verb|_start|.
 
-\nextchunklabel{cachetiming-program-1}
 <<cachetiming-program>>=
 _start:
 @
@@ -235,14 +229,14 @@ Now we start with initialising the [[data]] area with some random data. For this
 the [[data]] area.
 
 \nextchunklabel{cachetiming-program-2}
-<<cachetiming-program>>=
+<<init-random-data>>=
      mov       RDI,data
 @
 
 Next we load the number of bytes to fill into \verb|RSI|. For this we load the [[pagesize]] into \verb|RSI|.
 
 \nextchunklabel{cachetiming-program-3}
-<<cachetiming-program>>=
+<<init-random-data>>=
      mov       RSI,pagesize
 @
 
@@ -250,7 +244,7 @@ At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc} an
 value.
 
 \nextchunklabel{cachetiming-program-4}
-<<cachetiming-program>>=
+<<init-random-data>>=
      rdtsc
      mov       EDX,EAX
 @
@@ -258,8 +252,15 @@ value.
 Now we call [[_xorshift]] to fill the [[data]] area.
 
 \nextchunklabel{cachetiming-program-5}
-<<cachetiming-program>>=
+<<init-random-data>>=
      call      _xorshift
+@
+
+Now we add this data initialization to our program.
+
+\nextchunklabel{cachetiming-program-1}
+<<cachetiming-program>>=
+<<init-random-data>>
 @
 
 \subsection{Measure Time}
@@ -300,13 +301,13 @@ For this we define the text to print.
      scached:       db "Cached Access Time: ",0x00
 @ %def scached
 
-Additionally we define some helper data, in this case \gls{cr}.
+Additionally we define some helper data, in this case \gls{lf}.
 
 <<common-rodata>>=
-     scr:           db 0x0a
-@ %def scr
+     slf:           db 0x0a
+@ %def slf
 
-Now we can print the text.
+Now we can store \verb|RAX| and print the text.
 
 <<cachetiming-program>>=
      push      RAX
@@ -314,13 +315,18 @@ Now we can print the text.
      call      _print
 @
 
-Then we restore the value and print the measured time to \verb|stdout|. At last we append a \gls{cr} to the output.
+We now restore the value and print the measured time to \verb|stdout|.
 
 <<cachetiming-program>>=
      pop       RDI
      mov       RSI,scratch
      call      _printdu64bit
-     mov       RSI,scr
+@
+
+At last we append a \gls{lf} to the output.
+
+<<cachetiming-program>>=
+     mov       RSI,slf
      mov       RDI,1
      call      _nprint
 @
@@ -347,7 +353,7 @@ Now we have the time of the uncached data access in \verb|RAX| and can print it 
      pop       RDI
      mov       RSI,scratch
      call      _printdu64bit
-     mov       RSI,scr
+     mov       RSI,slf
      mov       RDI,1
      call      _nprint
 @
@@ -367,7 +373,8 @@ section .rodata
 <<cachetiming-rodata>>
 
 section .bss
-<<cachetiming-udata>>
+<<cache-udata>>
+<<scratch-udata>>
 
 section .text
 <<cachetiming-program>>
@@ -379,15 +386,26 @@ section .text
 <<utilities>>
 @
 
-The program is placed in \verb|asm/|. With \verb|make| in the folder we can create an executable which is moved to
-\verb|bin/|. There we can execute this program.
+The program source is placed in \verb|asm/|. With \verb|make| in the folder we can create an executable which is moved
+to \verb|bin/|. There we can execute this program.
 
 \begin{verbatim}
-$ ./cachetiming
+$ bin/cachetiming
 Cached Access Time: 72
 Uncached Access Time: 372
 $ 
 \end{verbatim}
+
+\section{Read Byte via Cache Access Time}
+
+\subsection{Introduction}
+
+We have seen that we can determine if the content of a memory address is in the cache or not (see
+\ref{sec:Measure Cache Access Time} \nameref{sec:Measure Cache Access Time}).
+
+So next we try to read a single byte from the memory by only detecting the cache access time.
+
+For this we will create a [[probe]] array and fill it with some random data.
 
 \section{Read Array via Cache Access Time}
 
@@ -499,7 +517,7 @@ _calcareacachetime:
      mov       RSI,scratch
      call      _printdu64bit
      mov       RDI,1
-     mov       RSI,scr
+     mov       RSI,slf
      call      _nprint
      pop       RAX
      pop       RSI
@@ -804,7 +822,7 @@ value we additionally mark the byte.
      mov       RDI,sresetstyle
      call      _print
      mov       RDI,1
-     mov       RSI,scr
+     mov       RSI,slf
      call      _nprint
      pop       R12
      mov       RSP,RBP
@@ -841,7 +859,7 @@ TBD
 
 section .bss
      align          pagesize
-<<cache-data>>
+<<cache-udata>>
 <<cacheread-udata>>
 <<readback-udata>>
 
