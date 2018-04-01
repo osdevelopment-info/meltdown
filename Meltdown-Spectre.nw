@@ -483,20 +483,17 @@ We use the value in RAX to access the probe array.
      mov       RAX,[RSI+RAX]
 @
 
-Now we read the datum back via the cache access times. For this we create a subroutine.
+Now we read the datum back via the cache access times. For this we create subroutines.
 
 \subsection{Read a Byte from the Cache}
+
+First we create a subroutine to read the cache access timings for the probe area.
 
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
 \item [RDI] the address of the probe memory
 \item [RSI] the step size in the probe memory
-\item [RDX] a scratch area to keep the detected cache access times (256~*~8~bytes)
-\end{labeling}
-
-\paragraph{Return}
-\begin{labeling}{[XXX-XXX]}
-\item [RAX] the read byte indirectly from the cache access times
+\item [RDX] an area to keep the detected cache access times (256~*~8~bytes)
 \end{labeling}
 
 <<readcachetiming>>=
@@ -507,11 +504,10 @@ _readcachetiming:
 Now we create space on the stack to keep the variables. Next we save the parameters to the stack space created.
 
 <<readcachetiming>>=
-     sub       RSP,40
+     sub       RSP,32
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
      mov       [RBP-24],RDX
-     mov       [RBP-32],RDX
 @
 
 Now we can start detecting the cache access times.
@@ -519,26 +515,48 @@ Now we can start detecting the cache access times.
 <<readcachetiming>>=
      mov       RCX,256
 .nextcacheread:
-     mov       [RBP-40],RCX
+     mov       [RBP-32],RCX
      call      _calccachetime
-     mov       RDX,[RBP-32]
+     mov       RDX,[RBP-24]
      mov       [RDX],RAX
      add       RDX,8
-     mov       [RBP-32],RDX
+     mov       [RBP-24],RDX
      mov       RDI,[RBP-8]
      add       RDI,[RBP-16]
      mov       [RBP-8],RDI
-     mov       RCX,[RBP-40]
+     mov       RCX,[RBP-32]
      loop      .nextcacheread
 @
 
-After we determined all cache access times we can now find the lowest access time and with this the possible byte.
+At the end we clean up the stack again and return to the caller.
 
 <<readcachetiming>>=
+<<leavestackframe>>
+     ret
+@
+
+After we determined all cache access times we can now find the lowest access time and with this the possible byte. We
+return two results from this subroutine, in \verb|AL| the byte with the lowest cache access time and in \verb|AH| the
+count of the lowest cache access time. Only if \verb|AH| is 1 then the value in \verb|AL| is valid.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the area with the detected cache access times (256~*~8~bytes)
+\end{labeling}
+
+\paragraph{Return}
+\begin{labeling}{[XXX-XXX]}
+\item [AL] the read byte (in \verb|AL|) with the lowest cache access time
+\item [AH] the number of bytes read with the lowest cache access time
+\end{labeling}
+
+<<analyzecachemintiming>>=
+_analyzecachemintiming:
+     push      RDI
      mov       R8,0xffffffffffffffff
-     mov       R9,0
+     xor       R9,R9
      xor       RCX,RCX
-     mov       RSI,[RBP-24]
+     mov       RSI,RDI
 .nexttry:
      lodsq
      cmp       RAX,R8
@@ -549,13 +567,20 @@ After we determined all cache access times we can now find the lowest access tim
      inc       RCX
      cmp       RCX,256
      jb        .nexttry
-     mov       RAX,R9
-@
-
-At the end we clean up the stack again and return to the caller.
-
-<<readcachetiming>>=
-<<leavestackframe>>
+     xor       RCX,RCX
+     pop       RSI
+.nextcount:
+     lodsq
+     cmp       RAX,R8
+     ja        .nomin
+     inc       R10
+.nomin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextcount
+     mov       RAX,R10
+     shl       RAX,8
+     mov       AL,R9b
      ret
 @
 
@@ -575,13 +600,16 @@ Now we have all subroutines together we now can start implementing the main prog
      mov       RSI,pagesize
      mov       RDX,timings
      call      _readcachetiming
+     mov       RDI,timings
+     call      _analyzecachemintiming
 @
 
 Now we define a string to output for the read byte and the expected byte.
 
 <<cachereadbyte-rodata>>=
-     sreadbyte:     db "Byte read via cache access: ",0x00
-     sexpectedbyte: db "Expected byte from data:    ",0x00
+     sreadbyte:     db "Byte read via cache access:     ",0x00
+     ssountbyte:    db "Count of bytes with min timing: ",0x00
+     sexpectedbyte: db "Expected byte from data:        ",0x00
 @
 
 We save the value from \verb|RAX| (only \verb|AL| is interesting to us) to the stack and print out the text.
@@ -596,8 +624,25 @@ Now we print the read byte and end the line with a \gls{lf}.
 
 <<cachereadbyte-program>>=
      pop       RDI
+     push      RDI
+     and       RDI,0xff
      mov       RSI,scratch
      call      _printh8bit
+     mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
+@
+
+Next we print (for information) the number of bytes read with the minimum cache access timing.
+
+<<cachereadbyte-program>>=
+     mov       RDI,ssountbyte
+     call      _print
+     pop       RDI
+     shr       RDI,8
+     and       RDI,0xff
+     mov       RSI,scratch
+     call      _printdu64bit
      mov       RDI,1
      mov       RSI,slf
      call      _nprint
@@ -649,10 +694,35 @@ section .text
 
 <<readcachetiming>>
 
+<<analyzecachemintiming>>
+
 <<xorshift-prng>>
 
 <<utilities>>
 @
+
+\subsection{Improve Cache Access Time Analysis}
+
+As we can see -- when running the program \verb|cachereadbyte| -- the result is not always as clear as it could be.
+Simply getting the lowest cache access time is not enough.
+
+Sample outputs of the program are
+
+\begin{verbatim}
+$ bin/cachereadbyte
+Byte read via cache access:     2b
+Count of bytes with min timing: 1
+Expected byte from data:        2b
+$ bin/cachereadbyte
+Byte read via cache access:     ff
+Count of bytes with min timing: 11
+Expected byte from data:        b3
+$ bin/cachereadbyte
+Byte read via cache access:     2f
+Count of bytes with min timing: 1
+Expected byte from data:        87
+$ 
+\end{verbatim}
 
 \section{Read Array via Cache Access Time}
 

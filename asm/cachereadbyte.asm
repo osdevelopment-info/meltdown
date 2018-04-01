@@ -21,8 +21,9 @@ bits 64
 
 section .rodata
      slf:           db 0x0a
-     sreadbyte:     db "Byte read via cache access: ",0x00
-     sexpectedbyte: db "Expected byte from data:    ",0x00
+     sreadbyte:     db "Byte read via cache access:     ",0x00
+     ssountbyte:    db "Count of bytes with min timing: ",0x00
+     sexpectedbyte: db "Expected byte from data:        ",0x00
 
 section .bss
      alignb         pagesize
@@ -59,12 +60,26 @@ _start:
      mov       RSI,pagesize
      mov       RDX,timings
      call      _readcachetiming
+     mov       RDI,timings
+     call      _analyzecachemintiming
      push      RAX
      mov       RDI,sreadbyte
      call      _print
      pop       RDI
+     push      RDI
+     and       RDI,0xff
      mov       RSI,scratch
      call      _printh8bit
+     mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
+     mov       RDI,ssountbyte
+     call      _print
+     pop       RDI
+     shr       RDI,8
+     and       RDI,0xff
+     mov       RSI,scratch
+     call      _printdu64bit
      mov       RDI,1
      mov       RSI,slf
      call      _nprint
@@ -110,28 +125,33 @@ _calccachetime:
 _readcachetiming:
      push      RBP
      mov       RBP,RSP
-     sub       RSP,40
+     sub       RSP,32
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
      mov       [RBP-24],RDX
-     mov       [RBP-32],RDX
      mov       RCX,256
 .nextcacheread:
-     mov       [RBP-40],RCX
+     mov       [RBP-32],RCX
      call      _calccachetime
-     mov       RDX,[RBP-32]
+     mov       RDX,[RBP-24]
      mov       [RDX],RAX
      add       RDX,8
-     mov       [RBP-32],RDX
+     mov       [RBP-24],RDX
      mov       RDI,[RBP-8]
      add       RDI,[RBP-16]
      mov       [RBP-8],RDI
-     mov       RCX,[RBP-40]
+     mov       RCX,[RBP-32]
      loop      .nextcacheread
+     mov       RSP,RBP
+     pop       RBP
+     ret
+
+_analyzecachemintiming:
+     push      RDI
      mov       R8,0xffffffffffffffff
-     mov       R9,0
+     xor       R9,R9
      xor       RCX,RCX
-     mov       RSI,[RBP-24]
+     mov       RSI,RDI
 .nexttry:
      lodsq
      cmp       RAX,R8
@@ -142,9 +162,20 @@ _readcachetiming:
      inc       RCX
      cmp       RCX,256
      jb        .nexttry
-     mov       RAX,R9
-     mov       RSP,RBP
-     pop       RBP
+     xor       RCX,RCX
+     pop       RSI
+.nextcount:
+     lodsq
+     cmp       RAX,R8
+     ja        .nomin
+     inc       R10
+.nomin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextcount
+     mov       RAX,R10
+     shl       RAX,8
+     mov       AL,R9b
      ret
 
 _xorshift:
