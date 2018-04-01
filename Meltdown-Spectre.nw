@@ -499,14 +499,14 @@ Now we read the datum back via the cache access times. For this we create a subr
 \item [RAX] the read byte indirectly from the cache access times
 \end{labeling}
 
-<<readcachebyte>>=
-_readcachebyte:
+<<readcachetiming>>=
+_readcachetiming:
 <<enterstackframe>>
-@ %def _readcachebyte
+@ %def _readcachetiming
 
 Now we create space on the stack to keep the variables. Next we save the parameters to the stack space created.
 
-<<readcachebyte>>=
+<<readcachetiming>>=
      sub       RSP,40
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
@@ -516,7 +516,7 @@ Now we create space on the stack to keep the variables. Next we save the paramet
 
 Now we can start detecting the cache access times.
 
-<<readcachebyte>>=
+<<readcachetiming>>=
      mov       RCX,256
 .nextcacheread:
      mov       [RBP-40],RCX
@@ -534,7 +534,7 @@ Now we can start detecting the cache access times.
 
 After we determined all cache access times we can now find the lowest access time and with this the possible byte.
 
-<<readcachebyte>>=
+<<readcachetiming>>=
      mov       R8,0xffffffffffffffff
      mov       R9,0
      xor       RCX,RCX
@@ -554,14 +554,14 @@ After we determined all cache access times we can now find the lowest access tim
 
 At the end we clean up the stack again and return to the caller.
 
-<<readcachebyte>>=
+<<readcachetiming>>=
 <<leavestackframe>>
      ret
 @
 
 \subsection{The Whole Program to Read a Byte from Cache}
 
-Before we can start using our new subroutine [[_readcachebyte]] we need to define a data area for the cache access
+Before we can start using our new subroutine [[_readcachetiming]] we need to define a data area for the cache access
 times.
 
 <<timings-udata>>=
@@ -574,7 +574,7 @@ Now we have all subroutines together we now can start implementing the main prog
      mov       RDI,probe
      mov       RSI,pagesize
      mov       RDX,timings
-     call      _readcachebyte
+     call      _readcachetiming
 @
 
 Now we define a string to output for the read byte and the expected byte.
@@ -647,7 +647,7 @@ section .text
 
 <<calculate-cache-access-time>>
 
-<<readcachebyte>>
+<<readcachetiming>>
 
 <<xorshift-prng>>
 

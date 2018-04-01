@@ -58,7 +58,7 @@ _start:
      mov       RDI,probe
      mov       RSI,pagesize
      mov       RDX,timings
-     call      _readcachebyte
+     call      _readcachetiming
      push      RAX
      mov       RDI,sreadbyte
      call      _print
@@ -107,7 +107,7 @@ _calccachetime:
      sub       RAX,R8
      ret
 
-_readcachebyte:
+_readcachetiming:
      push      RBP
      mov       RBP,RSP
      sub       RSP,40
