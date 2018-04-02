@@ -13,8 +13,8 @@
 \renewcommand{\autodot}{}
 
 % Code to get fewer pages by letting the code chunks to break at page limits
-%\def\nwendcode{\endtrivlist \endgroup}
-%\let\nwdocspar=\par
+\def\nwendcode{\endtrivlist \endgroup}
+\let\nwdocspar=\par
 
 \hypersetup{
     colorlinks=true,
@@ -836,6 +836,88 @@ _start:
 <<init-random-probe>>
 @
 
+Next we create a subroutine that clears the cache and reads in a byte via the probe array.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the address of the byte to read
+\item [RSI] the address of the probe memory
+\item [RDX] the step size in the probe memory
+\end{labeling}
+
+<<readbyte2cache>>=
+_readbyte2cache:
+     push      RDI
+     push      RSI
+     push      RDX
+     mov       RDI,RSI
+     mov       RSI,RDX
+     call      _clearcache
+@ %def _readbyte2cache
+
+Next we can add the read of the byte and caching the data from the probe array.
+
+<<readbyte2cache>>=
+     pop       RDX
+     pop       RSI
+     pop       RDI
+     xor       RAX,RAX
+     mov       AL,[RDI]
+     mul       RDX
+     mov       AL,[RSI+RAX]
+     ret
+@
+
+Now we add the call to this subroutine to our program and determine the byte by analyzing the cache access times.
+
+<<cachereadbyte3-program>>=
+.startreadcache:
+     mov       RDI,data
+     mov       RSI,probe
+     mov       RDX,pagesize
+     call      _readbyte2cache
+     mov       RDI,probe
+     mov       RSI,pagesize
+     mov       RDX,timings
+     call      _readcachetiming
+     mov       RDI,timings
+     call      _analyzecachetiming
+@
+
+Now we check if the read byte was a single byte, else we will do this again.
+
+<<cachereadbyte3-program>>=
+     cmp       AH,1
+     ja        .startreadcache
+@
+
+Now we print out our result.
+
+<<cachereadbyte3-program>>=
+     push      RAX
+     mov       RDI,sreadbyte
+     call      _print
+     pop       RDI
+     and       RDI,0xff
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
+     mov       RDI,sexpectedbyte
+     call      _print
+     mov       RSI,data
+     xor       RAX,RAX
+     mov       AL,[RSI]
+     mov       RDI,RAX
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
+<<exitProgram>>
+@
+
 <<cachereadbyte3.asm>>=
 <<preamble>>
 
@@ -852,6 +934,8 @@ section .bss
 section .text
 <<cachereadbyte3-program>>
 
+<<readbyte2cache>>
+
 <<clearcache>>
 
 <<calculate-cache-access-time>>
@@ -864,6 +948,9 @@ section .text
 
 <<utilities>>
 @
+
+Even if this program is not perfect because it is not reliable all the time it is reliable enough to demonstrate the
+next steps.
 
 \section{Read Array via Cache Access Time}
 
