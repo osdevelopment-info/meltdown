@@ -149,33 +149,36 @@ _readcachetiming:
 _analyzecachetiming:
      push      RDI
      mov       R8,0xffffffffffffffff
-     xor       R9,R9
      xor       RCX,RCX
      mov       RSI,RDI
-.nexttry:
+.nextmin:
      lodsq
      cmp       RAX,R8
-     ja        .nohit
+     ja        .nonewmin
      mov       R8,RAX
-     mov       R9,RCX
-.nohit:
+.nonewmin:
      inc       RCX
      cmp       RCX,256
-     jb        .nexttry
-     xor       RCX,RCX
+     jb        .nextmin
+     mov       RAX,R8
+     shr       RAX,4
+     add       R8,RAX
      pop       RSI
-.nextcount:
+     xor       RCX,RCX
+     xor       R9,R9
+.nextbyte:
      lodsq
      cmp       RAX,R8
-     ja        .nomin
-     inc       R10
-.nomin:
+     ja        .nonewbyte
+     inc       R9
+     mov       R10,RCX
+.nonewbyte:
      inc       RCX
      cmp       RCX,256
-     jb        .nextcount
-     mov       RAX,R10
+     jb        .nextbyte
+     mov       RAX,R9
      shl       RAX,8
-     mov       AL,R9b
+     mov       AL,R10b
      ret
 
 _xorshift:

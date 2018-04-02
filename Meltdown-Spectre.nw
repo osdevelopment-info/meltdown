@@ -550,8 +550,9 @@ count of the lowest cache access time. Only if \verb|AH| is 1 then the value in 
 \item [AH] the number of bytes read with the lowest cache access time
 \end{labeling}
 
+\nextchunklabel{analyzecachemintiming}
 <<analyzecachemintiming>>=
-_analyzecachemintiming:
+_analyzecachetiming:
      push      RDI
      mov       R8,0xffffffffffffffff
      xor       R9,R9
@@ -601,7 +602,7 @@ Now we have all subroutines together we now can start implementing the main prog
      mov       RDX,timings
      call      _readcachetiming
      mov       RDI,timings
-     call      _analyzecachemintiming
+     call      _analyzecachetiming
 @
 
 Now we define a string to output for the read byte and the expected byte.
@@ -704,7 +705,7 @@ section .text
 \subsection{Improve Cache Access Time Analysis}
 
 As we can see -- when running the program \verb|cachereadbyte| -- the result is not always as clear as it could be.
-Simply getting the lowest cache access time is not enough.
+Simply getting the lowest cache access time seems not to be enough.
 
 Sample outputs of the program are
 
@@ -723,6 +724,146 @@ Count of bytes with min timing: 1
 Expected byte from data:        87
 $ 
 \end{verbatim}
+
+So we have to improve our cache time detection routine. We will change the implementation of the chunk
+\subpageref{analyzecachemintiming} to define a thrshold that is a little bit above the min access time and run the
+cache detection routine multiple times if no clear result is returned.
+
+First start with the subrotuine to analyze the cache access timing. We define a threshold 25~\% above the minimum cache
+access time.
+
+First we search for the minimum cache access time.
+
+\paragraph{Parameters}
+\begin{labeling}{[XXX-XXX]}
+\item [RDI] the area with the detected cache access times (256~*~8~bytes)
+\end{labeling}
+
+\paragraph{Return}
+\begin{labeling}{[XXX-XXX]}
+\item [AL] the first byte (in \verb|AL|) with a cache access time below the threshold
+\item [AH] the number of bytes read with a cache access time below the threshold
+\end{labeling}
+
+<<analyzecachesimpthrestiming>>=
+_analyzecachetiming:
+     push      RDI
+     mov       R8,0xffffffffffffffff
+     xor       RCX,RCX
+     mov       RSI,RDI
+.nextmin:
+     lodsq
+     cmp       RAX,R8
+     ja        .nonewmin
+     mov       R8,RAX
+.nonewmin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextmin
+@
+
+Now we have the minimum cache access time in R8. Next we will add $\frac{1}{4}$ to this to have our threshold.
+
+<<analyzecachesimpthrestiming>>=
+     mov       RAX,R8
+     shr       RAX,4
+     add       R8,RAX
+@
+
+Now we scan the cache access times a second time and take all values below the threshold into account.
+
+<<analyzecachesimpthrestiming>>=
+     pop       RSI
+     xor       RCX,RCX
+     xor       R9,R9
+.nextbyte:
+     lodsq
+     cmp       RAX,R8
+     ja        .nonewbyte
+     inc       R9
+     mov       R10,RCX
+.nonewbyte:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextbyte
+     mov       RAX,R9
+     shl       RAX,8
+     mov       AL,R10b
+     ret
+@
+
+Now we put all together to get the program \verb|cachereadbyte2| that we can execute.
+
+<<cachereadbyte2.asm>>=
+<<preamble>>
+
+section .rodata
+<<common-rodata>>
+<<cachereadbyte-rodata>>
+
+section .bss
+<<data-udata>>
+<<probe-udata>>
+<<scratch-udata>>
+<<timings-udata>>
+
+section .text
+<<cachereadbyte-program>>
+
+<<clearcache>>
+
+<<calculate-cache-access-time>>
+
+<<readcachetiming>>
+
+<<analyzecachesimpthrestiming>>
+
+<<xorshift-prng>>
+
+<<utilities>>
+@
+
+Now when we only find a single hit then the possibility that the byte from the cache timing is the original byte is much
+higher.
+
+Next we will create a program that tries to read the value from the cache until we have a single result.
+
+First we initialize our data and probe areas.
+
+<<cachereadbyte3-program>>=
+_start:
+<<init-random-data>>
+<<init-random-probe>>
+@
+
+<<cachereadbyte3.asm>>=
+<<preamble>>
+
+section .rodata
+<<common-rodata>>
+<<cachereadbyte-rodata>>
+
+section .bss
+<<data-udata>>
+<<probe-udata>>
+<<scratch-udata>>
+<<timings-udata>>
+
+section .text
+<<cachereadbyte3-program>>
+
+<<clearcache>>
+
+<<calculate-cache-access-time>>
+
+<<readcachetiming>>
+
+<<analyzecachesimpthrestiming>>
+
+<<xorshift-prng>>
+
+<<utilities>>
+@
 
 \section{Read Array via Cache Access Time}
 
