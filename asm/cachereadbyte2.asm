@@ -55,7 +55,7 @@ _start:
      mov       RDX,pagesize
      mul       RDX
      mov       RSI,probe
-     mov       RAX,[RSI+RAX]
+     mov       AL,[RSI+RAX]
      mov       RDI,probe
      mov       RSI,pagesize
      mov       RDX,timings

@@ -480,7 +480,7 @@ We use the value in RAX to access the probe array.
      mov       RDX,pagesize
      mul       RDX
      mov       RSI,probe
-     mov       RAX,[RSI+RAX]
+     mov       AL,[RSI+RAX]
 @
 
 Now we read the datum back via the cache access times. For this we create subroutines.
@@ -956,262 +956,153 @@ next steps.
 
 \subsection{Introduction}
 
-Now that we have seen that we can determine if a value was in the cache or not (see \ref{sec:Measure Cache Access Time}
-\nameref{sec:Measure Cache Access Time}) we will read a complete array of data by only measuring the cache access time.
+Now we have read a byte via the cache access times. Now it is time to read a complete memory area.
 
 \subsection{Setup}
 
-For this we start with some [[data]] area that we can read later as defined before.
+For this we use the [[data]] defined before and read in the complete area. For this we need additionally a memory area
+that holds the read data.
 
-So start with the program and fill the [[data]] area with some random data.
+<<readback-udata>>=
+     alignb         pagesize
+     readbackdata   resb pagesize
+@ %def readbackdata
+
+First we initialize the [[data]] and [[probe]] areas in our program with some random data.
 
 <<cacheread-program>>=
 _start:
-     mov       RDI,data
-     mov       RSI,pagesize
-     rdtsc
-     mov       EDX,EAX
-     call      _xorshift
+<<init-random-data>>
+<<init-random-probe>>
 @
 
-Next we will create a probe area that is \(256 * pagesize\). We only access the first byte of each page but we divide
-the data over such a large area (1 MiB) to ensure that the cache lines that we use do not interfere each other.
-
-<<cacheread-udata>>=
-     probe:         times 256 resb pagesize
-@ %def probe
-
-Next we fill this area also with some random data.
-
-<<cacheread-program>>=
-     mov       RDI,probe
-     mov       RAX,pagesize
-     mov       RCX,256
-     mul       RCX
-     mov       RSI,RCX
-     rdtsc
-     mov       EDX,EAX
-     call      _xorshift
-@
-
-\subsection{Reading Bytes via Cache}
-
-As we saw we can determine if a memory datum is in cache or not. For reading a complete byte we have to do a little bit
-more. Basically we use the byte accessed to index a different [[probe]] area. Because the memory is not cached byte by
-byte but in so called cache lines we cannot use a simple 256~bytes sized probe array but must at least have a space
-between the accessed bytes that is larger than a cache line size. This is the reason why we use a probe array of
-256~*~[[pagesize]] bytes of size.
-
-Basically we use the following code to access the data. We load the content of the address we want to probe into a
-register. Then we multiply the register with some arbitary value (we use [[pagesize]]) and the access the probe area
-with the calculated offset. We can then test the cache which page was cached and have our value from the [[data]].
-
-<<cacheread-sample>>=
-     mov       RAX,[data]
-     mul       RAX,pagesize
-     mov       RBX,[probe+RAX]
-@
-
-First we write a subroutine to clear the cache lines from data from our [[probe]] area. We assume that we use 256 values
-(\(0\ldots255\)) for the indexing into the probe array. Also the [[probe]] area must be at least 256~*~RSI bytes in
-size.
+Next we will define a subroutine that reads the [[data]] area and writes the results of the cache read into
+[[readbackdata]].
 
 \paragraph{Parameters}
 \begin{labeling}{[XXX-XXX]}
-\item [RDI] the address of the probe array
-\item [RSI] the interval between the probe addresses used
+\item [RDI] the address of the data memory
+\item [RSI] the size of the data memory
+\item [RDX] the address of the probe memory
+\item [RCX] the step size in the probe memory (the probe area needs to be at least 256~*~RCX~bytes in size)
+\item [R8] the address of the readback area (must be at least the same size as the data area)
+\item [R9] the address of the the area to keep the timing data (at least 256~*~8~bytes)
 \end{labeling}
 
-<<clear-cache>>=
-_clearcache:
-     cld
-     mov       RCX,256
+<<readarea>>=
+_readarea:
+@ %def _readarea
+
+Now we create some place on the stack and store the parameters on it. We reserve an extra place at \verb|[RBP-56]| for a
+counter into the data memory.
+
+<<readarea>>=
+<<enterstackframe>>
+     sub       RSP,56
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     mov       [RBP-32],RCX
+     mov       [RBP-40],R8
+     mov       [RBP-48],R9
      xor       RAX,RAX
-.clear_next:
-     clflush   [RDI+RAX]
-     add       RAX,RSI
-     loop      .clear_next
-     lfence
-     ret
-@ %def _clearcache
-
-Next we need a subroutine that determines the cache line access times for the data in the [[probe]] area. So we create a
-subroutine that loops similar to the [[_clearcache]] subroutine over all addresses and measures the cache access time
-for each page.
-
-\paragraph{Parameters}
-\begin{labeling}{[XXX-XXX]}
-\item [RDI] the address of the probe array
-\item [RSI] the interval between the probe addresses used
-\item [RDX] the address of the results of the cache measurements. The area needs to be 256~*~8~bytes in size
-\end{labeling}
-
-<<detect-cache-area-time>>=
-_calcareacachetime:
-     xor       RCX,RCX
-.next_timing:
-     push      RCX
-     push      RDX
-     push      RDI
-     push      RSI
-     call      _calccachetime
-     push      RAX
-     mov       RDI,RAX
-     mov       RSI,scratch
-     call      _printdu64bit
-     mov       RDI,1
-     mov       RSI,slf
-     call      _nprint
-     pop       RAX
-     pop       RSI
-     pop       RDI
-     pop       RDX
-     pop       RCX
-     mov       [RDX+8*RCX],RAX
-     add       RDI,RSI
-     inc       RCX
-     cmp       RCX,256
-     jb        .next_timing
-     ret
-@ %def _calcareacachetime
-
-We now can determine the cache line with the lowest access time. This is the cache line that was cached before.
-
-\paragraph{Parameters}
-\begin{labeling}{[XXX-XXX]}
-\item [RDI] the address of the probe array
-\item [RSI] the interval between the probe addresses used
-\item [RDX] the address of the results of the cache measurements. The area needs to be 256~*~8~bytes in size
-\end{labeling}
-
-\paragraph{Return}
-\begin{labeling}{[XXX-XXX]}
-\item [RAX] the byte (in \verb|AL|) which is found by cache timing analysis
-\end{labeling}
-
-TBD
-
-<<detect-byte>>=
-_detectbytebycl:
-     push      RDI
-     call      _calcareacachetime
-     pop       RDI
-     mov       RSI,RDX
-     xor       RCX,RCX
-     mov       R8,0xffffffffffffffff
-     xor       R9,R9
-.nextbyte:
-     mov       RAX,[RDI+8*RCX]
-     cmp       RAX,R8
-     jb        .foundbyte
-     inc       RCX
-     cmp       RCX,256
-     jae       .done
-     jmp       .nextbyte
-.foundbyte:
-     mov       R8,RAX
-     mov       R9,RCX
-     jmp       .nextbyte
-.done:
-     mov       RAX,R9
-     ret
+     mov       [RBP-56],RAX
 @
 
-Now we need some area to store all the data. Once we use an area for the timing data and another area for the read
-memory data.
+First we have to clear the cache before we can measure any cache access times.
 
-<<cacheread-udata>>=
-     result:        resb pagesize
-     timing:        resq 256
-@
-
-Now we have the base for reading a complete memory area via a cache covert channel.
-
-We now create a subroutine to loop over the memory we want to read and read the values back via the cache access time.
-
-First we create a area where we can store the read bytes.
-
-<<readback-udata>>=
-;     readback:      align pagesize, resb pagesize
-@ %def readback
-
-Now we create the subroutine that reads the bytes from the source array [[data]] and writes the results from the cache
-access time into [[readback]].
-
-First we setup a counter in \verb|R8| and clear the cache.
-
-<<cache-readback>>=
-_cachereadback:
-     xor       R8,R8
-.nextbyte:
-     push      R8
-     mov       RDI,probe
-     mov       RSI,pagesize
+<<readarea>>=
+.startread:
+     mov       RDI,[RBP-24]
+     mov       RSI,[RBP-32]
      call      _clearcache
-     pop       R8
-@ %def _cachereadback
-
-Next we read in the data from the array.
-
-<<cache-readback>>=
-     mov       RSI,data
-     xor       RAX,RAX
-     mov       AL,[RSI+R8]
 @
 
-Next we use the read byte to index into our probe array.
+Now we can load the byte from the memory and cache the according value from the [[probe]] memory.
 
-<<cache-readback>>=
-     mov       RDX,pagesize
+<<readarea>>=
+     mov       RSI,[RBP-8]
+     add       RSI,[RBP-56]
+     xor       RAX,RAX
+     mov       AL,[RSI]
+     mov       RDX,[RBP-32]
      mul       RDX
-     mov       RSI,probe
+     mov       RSI,[RBP-24]
      mov       AL,[RSI+RAX]
 @
 
-Now we have put data into the cache that depends on the value read from [[data]]. Next we will read the cache access
-times to determine the data read.
+Now that we have filled our cache we can determine the cache access times.
 
-<<cache-readback>>=
-     mov       RDI,probe
-     mov       RSI,pagesize
-     mov       RDX,timing
-     push      R8
-     call      _detectbytebycl
-     pop       R8
+<<readarea>>=
+     mov       RDI,[RBP-24]
+     mov       RSI,[RBP-32]
+     mov       RDX,[RBP-48]
+     call      _readcachetiming
 @
 
-Next we store the read byte into our result array.
+Now we can analyze the cache access times.
 
-<<cache-readback>>=
-     mov       RDI,result
-     mov       [RDI+R8],AL
+<<readarea>>=
+     mov       RDI,[RBP-48]
+     call      _analyzecachetiming
 @
 
-Now we can increment our counter and check if there are more bytes to read. If no more bytes need to be read we leave
-our subroutine.
+If we have more than 1 hit then we retry the reading of the byte.
 
-<<cache-readback>>=
-     inc       R8
-     cmp       R8,pagesize
-     jb        .nextbyte
+<<readarea>>=
+     cmp       AH,1
+     ja        .startread
+@
+
+Now that we found a byte we store it in the resulting memory area.
+
+<<readarea>>=
+     mov       RDI,[RBP-40]
+     mov       RCX,[RBP-56]
+     add       RDI,RCX
+     mov       [RDI],AL
+     inc       RCX
+     mov       [RBP-56],RCX
+     cmp       RCX,[RBP-16]
+     jb        .startread
+@
+
+Now we clean up the stack frame and return to the caller.
+
+<<readarea>>=
+<<leavestackframe>>
      ret
 @
 
-After all we can now call this new subroutine and read our data by detecting the cache access times.
+Now we can add this to our program.
 
 <<cacheread-program>>=
-     call      _cachereadback
+     mov       RDI,data
+     mov       RSI,pagesize
+     mov       RDX,probe
+     mov       RCX,pagesize
+     mov       R8,readbackdata
+     mov       R9,timings
+     call      _readarea
 @
 
-\subsection{Printing the Results}
+TBD
 
-Now we want to see the results so we now read a byte from the origin ([[data]]) and from our read back data
-([[readback]]).
+<<cacheread-program>>=
+     mov       RDI,data
+     mov       RSI,readbackdata
+     call      _printcompare
+@
 
-First we define some helpful data for colorizing the output.
+At the end we end the program.
+
+<<cacheread-program>>=
+<<exitProgram>>
+@
+
+TBD
 
 <<cacheread-rodata>>=
-<<common-rodata>>
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
      sseparator:    db "- ",0x00
@@ -1391,42 +1282,36 @@ _printcompare:
 
 TBD
 
-<<cacheread-program>>=
-     mov       RDI,data
-     mov       RSI,result
-     call      _printcompare
-@
-
 <<cacheread.asm>>=
 <<preamble>>
 
-section .bss
-     align          pagesize
-<<data-udata>>
-<<cacheread-udata>>
-<<readback-udata>>
-
-section .data
+section .rodata
+<<common-rodata>>
 <<cacheread-rodata>>
+
+section .bss
+<<data-udata>>
+<<probe-udata>>
+<<readback-udata>>
+<<timings-udata>>
+<<scratch-udata>>
 
 section .text
 <<cacheread-program>>
 
-<<exitProgram>>
+<<clearcache>>
+
+<<calculate-cache-access-time>>
+
+<<readcachetiming>>
+
+<<analyzecachemintiming>>
+
+<<readarea>>
 
 <<print-comparision>>
 
 <<print-comparision16>>
-
-<<cache-readback>>
-
-<<clear-cache>>
-
-<<calculate-cache-access-time>>
-
-<<detect-cache-area-time>>
-
-<<detect-byte>>
 
 <<xorshift-prng>>
 

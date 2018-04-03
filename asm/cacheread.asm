@@ -19,23 +19,23 @@ bits 64
      global         _start
      pagesize       equ 4096
 
-section .bss
-     align          pagesize
-     alignb         pagesize
-     data:          resb pagesize
-     probe:         times 256 resb pagesize
-     result:        resb pagesize
-     timing:        resq 256
-     scratch:       resb 64
-;     readback:      align pagesize, resb pagesize
-
-section .data
+section .rodata
      slf:           db 0x0a
      sbgred:        db 0x1b,"[1;41m",0x00
      sresetstyle:   db 0x1b,"[0m",0x00
      sseparator:    db "- ",0x00
      sblank:        db " "
      semptybyte:    db "   ",0x00
+
+section .bss
+     alignb         pagesize
+     data:          resb pagesize
+     alignb         pagesize
+     probe          times 256 resb pagesize
+     alignb         pagesize
+     readbackdata   resb pagesize
+     timings        resq 256
+     scratch:       resb 32
 
 section .text
 _start:
@@ -45,21 +45,148 @@ _start:
      mov       EDX,EAX
      call      _xorshift
      mov       RDI,probe
-     mov       RAX,pagesize
-     mov       RCX,256
-     mul       RCX
-     mov       RSI,RCX
+     mov       RSI,pagesize
+     shl       RSI,8
      rdtsc
      mov       EDX,EAX
      call      _xorshift
-     call      _cachereadback
      mov       RDI,data
-     mov       RSI,result
+     mov       RSI,pagesize
+     mov       RDX,probe
+     mov       RCX,pagesize
+     mov       R8,readbackdata
+     mov       R9,timings
+     call      _readarea
+     mov       RDI,data
+     mov       RSI,readbackdata
      call      _printcompare
-
      xor       RDI,RDI
      mov       RAX,60
      syscall
+
+_clearcache:
+     mov       RCX,256
+     cld
+.nextflush:
+     clflush   [RDI]
+     add       RDI,RSI
+     loop      .nextflush
+     lfence
+     ret
+
+_calccachetime:
+     lfence
+     rdtsc
+     shl       RDX,32
+     add       RAX,RDX
+     mov       R8,RAX
+     mov       RCX,[RDI]
+     lfence
+     rdtsc
+     shl       RDX,32
+     add       RAX,RDX
+     sub       RAX,R8
+     ret
+
+_readcachetiming:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,32
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     mov       RCX,256
+.nextcacheread:
+     mov       [RBP-32],RCX
+     call      _calccachetime
+     mov       RDX,[RBP-24]
+     mov       [RDX],RAX
+     add       RDX,8
+     mov       [RBP-24],RDX
+     mov       RDI,[RBP-8]
+     add       RDI,[RBP-16]
+     mov       [RBP-8],RDI
+     mov       RCX,[RBP-32]
+     loop      .nextcacheread
+     mov       RSP,RBP
+     pop       RBP
+     ret
+
+_analyzecachetiming:
+     push      RDI
+     mov       R8,0xffffffffffffffff
+     xor       R9,R9
+     xor       RCX,RCX
+     mov       RSI,RDI
+.nexttry:
+     lodsq
+     cmp       RAX,R8
+     ja        .nohit
+     mov       R8,RAX
+     mov       R9,RCX
+.nohit:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nexttry
+     xor       RCX,RCX
+     pop       RSI
+.nextcount:
+     lodsq
+     cmp       RAX,R8
+     ja        .nomin
+     inc       R10
+.nomin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextcount
+     mov       RAX,R10
+     shl       RAX,8
+     mov       AL,R9b
+     ret
+
+_readarea:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,56
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     mov       [RBP-32],RCX
+     mov       [RBP-40],R8
+     mov       [RBP-48],R9
+     xor       RAX,RAX
+     mov       [RBP-56],RAX
+.startread:
+     mov       RDI,[RBP-24]
+     mov       RSI,[RBP-32]
+     call      _clearcache
+     mov       RSI,[RBP-8]
+     add       RSI,[RBP-56]
+     xor       RAX,RAX
+     mov       AL,[RSI]
+     mov       RDX,[RBP-32]
+     mul       RDX
+     mov       RSI,[RBP-24]
+     mov       AL,[RSI+RAX]
+     mov       RDI,[RBP-24]
+     mov       RSI,[RBP-32]
+     mov       RDX,[RBP-48]
+     call      _readcachetiming
+     mov       RDI,[RBP-48]
+     call      _analyzecachetiming
+     cmp       AH,1
+     ja        .startread
+     mov       RDI,[RBP-40]
+     mov       RCX,[RBP-56]
+     add       RDI,RCX
+     mov       [RDI],AL
+     inc       RCX
+     mov       [RBP-56],RCX
+     cmp       RCX,[RBP-16]
+     jb        .startread
+     mov       RSP,RBP
+     pop       RBP
+     ret
 
 _printcompare:
      mov       RDX,16
@@ -156,110 +283,6 @@ _printcompare16:
      pop       R12
      mov       RSP,RBP
      pop       RBP
-     ret
-
-_cachereadback:
-     xor       R8,R8
-.nextbyte:
-     push      R8
-     mov       RDI,probe
-     mov       RSI,pagesize
-     call      _clearcache
-     pop       R8
-     mov       RSI,data
-     xor       RAX,RAX
-     mov       AL,[RSI+R8]
-     mov       RDX,pagesize
-     mul       RDX
-     mov       RSI,probe
-     mov       AL,[RSI+RAX]
-     mov       RDI,probe
-     mov       RSI,pagesize
-     mov       RDX,timing
-     push      R8
-     call      _detectbytebycl
-     pop       R8
-     mov       RDI,result
-     mov       [RDI+R8],AL
-     inc       R8
-     cmp       R8,pagesize
-     jb        .nextbyte
-     ret
-
-_clearcache:
-     cld
-     mov       RCX,256
-     xor       RAX,RAX
-.clear_next:
-     clflush   [RDI+RAX]
-     add       RAX,RSI
-     loop      .clear_next
-     lfence
-     ret
-
-_calccachetime:
-     lfence
-     rdtsc
-     shl       RDX,32
-     add       RAX,RDX
-     mov       R8,RAX
-     mov       RCX,[RDI]
-     lfence
-     rdtsc
-     shl       RDX,32
-     add       RAX,RDX
-     sub       RAX,R8
-     ret
-
-_calcareacachetime:
-     xor       RCX,RCX
-.next_timing:
-     push      RCX
-     push      RDX
-     push      RDI
-     push      RSI
-     call      _calccachetime
-     push      RAX
-     mov       RDI,RAX
-     mov       RSI,scratch
-     call      _printdu64bit
-     mov       RDI,1
-     mov       RSI,slf
-     call      _nprint
-     pop       RAX
-     pop       RSI
-     pop       RDI
-     pop       RDX
-     pop       RCX
-     mov       [RDX+8*RCX],RAX
-     add       RDI,RSI
-     inc       RCX
-     cmp       RCX,256
-     jb        .next_timing
-     ret
-
-_detectbytebycl:
-     push      RDI
-     call      _calcareacachetime
-     pop       RDI
-     mov       RSI,RDX
-     xor       RCX,RCX
-     mov       R8,0xffffffffffffffff
-     xor       R9,R9
-.nextbyte:
-     mov       RAX,[RDI+8*RCX]
-     cmp       RAX,R8
-     jb        .foundbyte
-     inc       RCX
-     cmp       RCX,256
-     jae       .done
-     jmp       .nextbyte
-.foundbyte:
-     mov       R8,RAX
-     mov       R9,RCX
-     jmp       .nextbyte
-.done:
-     mov       RAX,R9
      ret
 
 _xorshift:
