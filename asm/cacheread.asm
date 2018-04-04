@@ -26,6 +26,8 @@ section .rodata
      sseparator:    db "- ",0x00
      sblank:        db " "
      semptybyte:    db "   ",0x00
+     sstatistics:   db "Failed read relation: ",0x00
+     sper:          db "/"
 
 section .bss
      alignb         pagesize
@@ -59,7 +61,23 @@ _start:
      call      _readarea
      mov       RDI,data
      mov       RSI,readbackdata
+     mov       RDX,pagesize
      call      _printcompare
+     push      RAX
+     mov       RDI,sstatistics
+     call      _print
+     pop       RDI
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RDI,1
+     mov       RSI,sper
+     call      _nprint
+     mov       RDI,pagesize
+     mov       RSI,scratch
+     call      _printdu64bit
+     mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
      xor       RDI,RDI
      mov       RAX,60
      syscall
@@ -189,8 +207,38 @@ _readarea:
      ret
 
 _printcompare:
-     mov       RDX,16
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,40
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     push      R12
+     xor       R12,R12
+     shr       RDX,4
+     mov       [RBP-32],RDX
+     xor       RCX,RCX
+.nextline:
+     mov       [RBP-40],RCX
+     cmp       RCX,[RBP-32]
+     jae       .linesdone
+     mov       RAX,RCX
+     shl       RAX,4
+     mov       RDI,[RBP-8]
+     add       RDI,RAX
+     mov       RSI,[RBP-16]
+     add       RSI,RAX
+     mov       RDX,0x10
      call      _printcompare16
+     add       R12,RAX
+     mov       RCX,[RBP-40]
+     inc       RCX
+     jmp       .nextline
+.linesdone:
+     mov       RAX,R12
+     pop       R12
+     mov       RSP,RBP
+     pop       RBP
      ret
 
 _printcompare16:
@@ -199,10 +247,14 @@ _printcompare16:
      sub       RSP,32
      mov       [RBP-8],RDI
      mov       [RBP-16],RSI
+     cmp       RDX,0x10
+     jb        .valueok
+     mov       RDX,0x10
+.valueok:
      mov       [RBP-24],RDX
      push      R12
-     cmp       RDX,0x10
-     ja        .done
+     push      R13
+     xor       R13,R13
      xor       RCX,RCX
 .nextbyteleft:
      cmp       RCX,RDX
@@ -222,12 +274,13 @@ _printcompare16:
      inc       RCX
      jmp       .nextbyteleft
 .leftbytesdone:
+.leftemptybyte:
      cmp       RCX,0x10
      jae       .leftdone
      mov       RDI,semptybyte
      call      _print
      inc       RCX
-     jmp       .leftbytesdone
+     jmp       .leftemptybyte
 .leftdone:
      mov       RDI,sseparator
      call      _print
@@ -244,6 +297,7 @@ _printcompare16:
      mov       R12W,AX
      cmp       AH,AL
      je        .printplain
+     inc       R13
      mov       RDI,sbgred
      call      _print
 .printplain:
@@ -269,17 +323,19 @@ _printcompare16:
      inc       RCX
      jmp       .nextbyteright
 .rightbytesdone:
+.rightemptybyte:
      cmp       RCX,0x10
      jae       .rightdone
      inc       RCX
-     jmp       .rightbytesdone
+     jmp       .rightemptybyte
 .rightdone:
-.done:
      mov       RDI,sresetstyle
      call      _print
      mov       RDI,1
      mov       RSI,slf
      call      _nprint
+     mov       RAX,R13
+     pop       R13
      pop       R12
      mov       RSP,RBP
      pop       RBP
