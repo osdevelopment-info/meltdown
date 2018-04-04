@@ -21,51 +21,92 @@ bits 64
 
 section .rodata
      slf:           db 0x0a
-     scached:       db "Cached Access Time: ",0x00
-     suncached:     db "Uncached Access Time: ",0x00
+     sreadbyte:     db "Byte read via cache access:     ",0x00
+     ssountbyte:    db "Count of bytes with min timing: ",0x00
+     sexpectedbyte: db "Expected byte from data:        ",0x00
 
 section .bss
      alignb         pagesize
      data:          resb pagesize
+     alignb         pagesize
+     probe          times 256 resb pagesize
      scratch:       resb 32
+     timings        resq 256
 
 section .text
+     mov       RDI,probe
+     mov       RSI,pagesize
+     call      _clearcache
 _start:
      mov       RDI,data
      mov       RSI,pagesize
      rdtsc
      mov       EDX,EAX
      call      _xorshift
+     mov       RDI,probe
+     mov       RSI,pagesize
+     shl       RSI,8
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
      mov       RDI,data
-     clflush   [RDI]
-     lfence
-     mov       RCX,[RDI]
-     call      _calccachetime
+     xor       RAX,RAX
+     mov       AL,[RDI]
+     mov       RDX,pagesize
+     mul       RDX
+     mov       RSI,probe
+     mov       AL,[RSI+RAX]
+     mov       RDI,probe
+     mov       RSI,pagesize
+     mov       RDX,timings
+     call      _readcachetiming
+     mov       RDI,timings
+     call      _analyzecachetiming
      push      RAX
-     mov       RDI,scached
+     mov       RDI,sreadbyte
      call      _print
      pop       RDI
+     push      RDI
+     and       RDI,0xff
      mov       RSI,scratch
-     call      _printdu64bit
-     mov       RSI,slf
+     call      _printh8bit
      mov       RDI,1
+     mov       RSI,slf
      call      _nprint
-     mov       RDI,data
-     clflush   [RDI]
-     lfence
-     call      _calccachetime
-     push      RAX
-     mov       RDI,suncached
+     mov       RDI,ssountbyte
      call      _print
      pop       RDI
+     shr       RDI,8
+     and       RDI,0xff
      mov       RSI,scratch
      call      _printdu64bit
-     mov       RSI,slf
      mov       RDI,1
+     mov       RSI,slf
+     call      _nprint
+     mov       RDI,sexpectedbyte
+     call      _print
+     mov       RSI,data
+     xor       RAX,RAX
+     mov       AL,[RSI]
+     mov       RDI,RAX
+     mov       RSI,scratch
+     call      _printh8bit
+     mov       RDI,1
+     mov       RSI,slf
      call      _nprint
      xor       RDI,RDI
      mov       RAX,60
      syscall
+
+_clearcache:
+     mov       RCX,256
+     cld
+.nextflush:
+     clflush   [RDI]
+     add       RDI,RSI
+     loop      .nextflush
+     lfence
+     ret
 
 _calccachetime:
      lfence
@@ -79,6 +120,62 @@ _calccachetime:
      shl       RDX,32
      add       RAX,RDX
      sub       RAX,R8
+     ret
+
+_readcachetiming:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,32
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     mov       RCX,256
+.nextcacheread:
+     mov       [RBP-32],RCX
+     call      _calccachetime
+     mov       RDX,[RBP-24]
+     mov       [RDX],RAX
+     add       RDX,8
+     mov       [RBP-24],RDX
+     mov       RDI,[RBP-8]
+     add       RDI,[RBP-16]
+     mov       [RBP-8],RDI
+     mov       RCX,[RBP-32]
+     loop      .nextcacheread
+     mov       RSP,RBP
+     pop       RBP
+     ret
+
+_analyzecachetiming:
+     push      RDI
+     mov       R8,0xffffffffffffffff
+     xor       R9,R9
+     xor       RCX,RCX
+     mov       RSI,RDI
+.nexttry:
+     lodsq
+     cmp       RAX,R8
+     ja        .nohit
+     mov       R8,RAX
+     mov       R9,RCX
+.nohit:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nexttry
+     xor       RCX,RCX
+     pop       RSI
+.nextcount:
+     lodsq
+     cmp       RAX,R8
+     ja        .nomin
+     inc       R10
+.nomin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextcount
+     mov       RAX,R10
+     shl       RAX,8
+     mov       AL,R9b
      ret
 
 _xorshift:

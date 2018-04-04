@@ -21,13 +21,17 @@ bits 64
 
 section .rodata
      slf:           db 0x0a
-     scached:       db "Cached Access Time: ",0x00
-     suncached:     db "Uncached Access Time: ",0x00
+     sreadbyte:     db "Byte read via cache access:     ",0x00
+     ssountbyte:    db "Count of bytes with min timing: ",0x00
+     sexpectedbyte: db "Expected byte from data:        ",0x00
 
 section .bss
      alignb         pagesize
      data:          resb pagesize
+     alignb         pagesize
+     probe          times 256 resb pagesize
      scratch:       resb 32
+     timings        resq 256
 
 section .text
 _start:
@@ -36,36 +40,75 @@ _start:
      rdtsc
      mov       EDX,EAX
      call      _xorshift
+     mov       RDI,probe
+     mov       RSI,pagesize
+     shl       RSI,8
+     rdtsc
+     mov       EDX,EAX
+     call      _xorshift
+.startreadcache:
      mov       RDI,data
-     clflush   [RDI]
-     lfence
-     mov       RCX,[RDI]
-     call      _calccachetime
+     mov       RSI,probe
+     mov       RDX,pagesize
+     call      _readbyte2cache
+     mov       RDI,probe
+     mov       RSI,pagesize
+     mov       RDX,timings
+     call      _readcachetiming
+     mov       RDI,timings
+     call      _analyzecachetiming
+     cmp       AH,1
+     ja        .startreadcache
      push      RAX
-     mov       RDI,scached
+     mov       RDI,sreadbyte
      call      _print
      pop       RDI
+     and       RDI,0xff
      mov       RSI,scratch
-     call      _printdu64bit
-     mov       RSI,slf
+     call      _printh8bit
      mov       RDI,1
+     mov       RSI,slf
      call      _nprint
-     mov       RDI,data
-     clflush   [RDI]
-     lfence
-     call      _calccachetime
-     push      RAX
-     mov       RDI,suncached
+     mov       RDI,sexpectedbyte
      call      _print
-     pop       RDI
+     mov       RSI,data
+     xor       RAX,RAX
+     mov       AL,[RSI]
+     mov       RDI,RAX
      mov       RSI,scratch
-     call      _printdu64bit
-     mov       RSI,slf
+     call      _printh8bit
      mov       RDI,1
+     mov       RSI,slf
      call      _nprint
      xor       RDI,RDI
      mov       RAX,60
      syscall
+
+_readbyte2cache:
+     push      RDI
+     push      RSI
+     push      RDX
+     mov       RDI,RSI
+     mov       RSI,RDX
+     call      _clearcache
+     pop       RDX
+     pop       RSI
+     pop       RDI
+     xor       RAX,RAX
+     mov       AL,[RDI]
+     mul       RDX
+     mov       AL,[RSI+RAX]
+     ret
+
+_clearcache:
+     mov       RCX,256
+     cld
+.nextflush:
+     clflush   [RDI]
+     add       RDI,RSI
+     loop      .nextflush
+     lfence
+     ret
 
 _calccachetime:
      lfence
@@ -79,6 +122,65 @@ _calccachetime:
      shl       RDX,32
      add       RAX,RDX
      sub       RAX,R8
+     ret
+
+_readcachetiming:
+     push      RBP
+     mov       RBP,RSP
+     sub       RSP,32
+     mov       [RBP-8],RDI
+     mov       [RBP-16],RSI
+     mov       [RBP-24],RDX
+     mov       RCX,256
+.nextcacheread:
+     mov       [RBP-32],RCX
+     call      _calccachetime
+     mov       RDX,[RBP-24]
+     mov       [RDX],RAX
+     add       RDX,8
+     mov       [RBP-24],RDX
+     mov       RDI,[RBP-8]
+     add       RDI,[RBP-16]
+     mov       [RBP-8],RDI
+     mov       RCX,[RBP-32]
+     loop      .nextcacheread
+     mov       RSP,RBP
+     pop       RBP
+     ret
+
+_analyzecachetiming:
+     push      RDI
+     mov       R8,0xffffffffffffffff
+     xor       RCX,RCX
+     mov       RSI,RDI
+.nextmin:
+     lodsq
+     cmp       RAX,R8
+     ja        .nonewmin
+     mov       R8,RAX
+.nonewmin:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextmin
+     mov       RAX,R8
+     shr       RAX,4
+     add       R8,RAX
+     pop       RSI
+     xor       RCX,RCX
+     xor       R9,R9
+.nextbyte:
+     lodsq
+     cmp       RAX,R8
+     ja        .nonewbyte
+     inc       R9
+     mov       R10,RCX
+.nonewbyte:
+     inc       RCX
+     cmp       RCX,256
+     jb        .nextbyte
+     mov       RAX,R9
+     shl       RAX,8
+     mov       AL,R10b
      ret
 
 _xorshift:
