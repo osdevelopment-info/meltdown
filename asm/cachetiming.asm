@@ -20,12 +20,12 @@ bits 64
      pagesize       equ 4096
 
 section .rodata
-     scr:           db 0x0a
+     slf:           db 0x0a
      scached:       db "Cached Access Time: ",0x00
      suncached:     db "Uncached Access Time: ",0x00
 
 section .bss
-     align          pagesize
+     alignb         pagesize
      data:          resb pagesize
      scratch:       resb 32
 
@@ -47,7 +47,7 @@ _start:
      pop       RDI
      mov       RSI,scratch
      call      _printdu64bit
-     mov       RSI,scr
+     mov       RSI,slf
      mov       RDI,1
      call      _nprint
      mov       RDI,data
@@ -60,7 +60,7 @@ _start:
      pop       RDI
      mov       RSI,scratch
      call      _printdu64bit
-     mov       RSI,scr
+     mov       RSI,slf
      mov       RDI,1
      call      _nprint
      xor       RDI,RDI
@@ -170,6 +170,8 @@ _printh8bit:
      mov       RAX,R8
      and       AL,0x0f
      call      .printh4bit
+     mov       RDI,2
+     call      _nprint
      ret
 .printh4bit:
      cmp       AL,10
