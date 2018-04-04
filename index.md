@@ -36,6 +36,8 @@ The continuous integration system also provides the
 [binaries](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/bin)
 of the build.
 
+A [short description](./using.html) of the programs is also available.
+
 # Building Instructions
 
 ## Build Samples
