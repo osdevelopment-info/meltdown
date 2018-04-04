@@ -18,6 +18,10 @@ This is a work in progress therefore not all source code gives the expected resu
 
 The following source codes are working as intended
 
+* [cachetiming.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cachetiming.asm)
+* [cachereadbyte.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cachereadbyte.asm)
+* [cachereadbyte2.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cachereadbyte2.asm)
+* [cachereadbyte3.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cachereadbyte3.asm)
 * [cacheread.asm](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/asm/cacheread.asm)
 
 For the latest source codes and pdf look at the
@@ -25,6 +29,12 @@ For the latest source codes and pdf look at the
 viewing on the page (even with a browser integrated pdf reader) does not work.
 
 If you want to generate the programs and documentation yourself go to [Full Build](#full-build).
+
+# Downloading executables
+
+The continuous integration system also provides the
+[binaries](https://ci.sw4j.net/jenkins/job/osdevelopment.info/job/meltdown/job/master/lastSuccessfulBuild/artifact/bin)
+of the build.
 
 # Building Instructions
 
