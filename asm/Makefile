@@ -60,4 +60,5 @@ install:
 	mv cacheread ../bin/
 
 clean:
-	rm *.o *.lst
+	rm -f *.o
+	rm -f *.lst

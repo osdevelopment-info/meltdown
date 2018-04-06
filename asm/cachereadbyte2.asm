@@ -17,7 +17,8 @@ bits 64
 ;   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
      global         _start
-     pagesize       equ 4096
+     pspower        equ 12
+     pagesize       equ 1 << pspower
 
 section .rodata
      slf:           db 0x0a

@@ -4,7 +4,10 @@
 \usepackage{noweb}
 \usepackage{xcolor}
 \usepackage[breaklinks]{hyperref}
+\usepackage{marginnote}
+\usepackage{makeidx}
 \usepackage[acronym,toc,numberedsection=autolabel,nopostdot]{glossaries}
+\usepackage[numindex,nottoc,notbib]{tocbibind}
 
 \renewcommand{\rm}[0]{\normalfont \rmfamily}
 \renewcommand{\tt}[0]{\normalfont \ttfamily}
@@ -13,8 +16,12 @@
 \renewcommand{\autodot}{}
 
 % Code to get fewer pages by letting the code chunks to break at page limits
-\def\nwendcode{\endtrivlist \endgroup}
-\let\nwdocspar=\par
+%\def\nwendcode{\endtrivlist \endgroup}
+%\let\nwdocspar=\par
+\def\nwendcode{\endtrivlist \endgroup \vfil\penalty10\vfilneg}
+\let\nwdocspar=\smallbreak
+
+\noweboptions{nomargintag}
 
 \hypersetup{
     colorlinks=true,
@@ -25,6 +32,8 @@
 }
 
 \setkomafont{labelinglabel}{\ttfamily}
+
+\makeindex
 
 \newglossary*{ins}{x86-Instructions}
 
@@ -129,8 +138,9 @@ bits 64
 <<license>>
 
      global         _start
-     pagesize       equ 4096
-@ %def pagesize _start
+     pspower        equ 12
+     pagesize       equ 1 << pspower
+@ %def _start pagesize pspower
 
 \chapter{Cache Access Timing}
 
@@ -143,10 +153,11 @@ TBD
 \subsection{High Resolution Timer}
 
 First we need a high resolution timer to determine the cache access time. For this we use the time stamp counter. The
-time stamp counter is monotonically incrementing. When reading the time stamp counter (with \gls{rdtsc}) the result is
-delivered back in the registers \verb|EDX| and \verb|EAX| forming a 64bit value. The time stamp counter is not an
-absolute value but a relative value, meaning that you cannot (easily) calculate from the time stamp counter to some time
-units (e.g. ns). But this is no problem as we only want to measure relative times.
+time stamp counter is monotonically incrementing. When reading the time stamp counter (with
+\gls{rdtsc}\index{rdtsc}\marginnote{rdtsc}) the result is delivered back in the registers \verb|EDX| and \verb|EAX|
+forming a 64bit value. The time stamp counter is not an absolute value but a relative value, meaning that you cannot
+(easily) calculate from the time stamp counter to some time units (e.g. ns). But this is no problem as we only want to
+measure relative times.
 
 To retrieve a 64bit value for the time we shift the value in \verb|EDX| 32 bits to the left and add the value of
 \verb|EAX| to this.
@@ -162,14 +173,14 @@ To retrieve a 64bit value for the time we shift the value in \verb|EDX| 32 bits 
 Next we need a routine that calculates the cache access time for us.
 
 First we have to ensure in this routine that the speculative execution of the processor does not interfere with our time
-measurement. For this we use the instruction \gls{lfence} which ensures that all previous reads are done before
-executing the next instructions.
+measurement. For this we use the instruction \gls{lfence}\index{lfence}\marginnote{lfence} which ensures that all
+previous reads are done before executing the next instructions.
 
 Next we access a memory location with the address \verb|RDI| by loading this into \verb|RCX| and measure the time before
 and after the access.
 
-The command \gls{lfence} before reading the time stamp counter is needed because we have to ensure that all reads before
-the time measurements are done.
+The command \gls{lfence}\index{lfence} before reading the time stamp counter is needed because we have to ensure that
+all reads before the time measurements are done.
 
 At last we calculate the relative time needed to access the memory location. In theory we should see a difference
 whether the memory location is accessed before or not.
@@ -239,8 +250,8 @@ Next we load the number of bytes to fill into \verb|RSI|. For this we load the [
      mov       RSI,pagesize
 @
 
-At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc} and only use the lower 32~bit of the
-value.
+At last we load \verb|EDX| with some random seed. For this we use \gls{rdtsc}\index{rdtsc} and only use the lower 32~bit
+of the value.
 
 \nextchunklabel{init-random-data-3}
 <<init-random-data>>=
@@ -273,8 +284,9 @@ For this we load \verb|RDI| with the address of the [[data]] area.
 @
 
 Before we load the data into a register now we will clear the cache lines with the given address. For this we use the
-instruction \gls{clflush}. After flushing the cache line we ensure (with \gls{lfence}) that all reads from memory are
-finished before we load the data into a register again (and filling the cache).
+instruction \gls{clflush}\index{clflush}\marginnote{clflush}. After flushing the cache line we ensure (with
+\gls{lfence}\index{lfence}) that all reads from memory are finished before we load the data into a register again (and
+filling the cache).
 
 <<cachetiming-program>>=
      clflush   [RDI]
@@ -362,7 +374,8 @@ At last we exit the program.
 <<exitProgram>>
 @
 
-Now we can put everything together and have our \verb|cachetiming| program that we can now execute.
+Now we can put everything together and have our \verb|cachetiming|\index{cachetiming (program)}\marginnote{cachetiming}
+program that we can now execute.
 
 <<cachetiming.asm>>=
 <<preamble>>
@@ -474,7 +487,7 @@ Now we can read a byte from [[data]] into \verb|AL|.
      mov       AL,[RDI]
 @
 
-We use the value in RAX to access the probe array.
+We use the value in \verb|RAX| to access the probe array.
 
 <<cachereadbyte-program>>=
      mov       RDX,pagesize
@@ -671,7 +684,8 @@ At last we exit the program.
 <<exitProgram>>
 @
 
-Now we put all together to get the program \verb|cachereadbyte| that we can execute.
+Now we put all together to get the program \verb|cachereadbyte|\index{cachereadbyte (program)}\marginnote{cachereadbyte}
+that we can execute.
 
 <<cachereadbyte.asm>>=
 <<preamble>>
@@ -762,7 +776,7 @@ _analyzecachetiming:
      jb        .nextmin
 @
 
-Now we have the minimum cache access time in R8. Next we will add $\frac{1}{4}$ to this to have our threshold.
+Now we have the minimum cache access time in \verb|R8|. Next we will add $\frac{1}{4}$ to this to have our threshold.
 
 <<analyzecachesimpthrestiming>>=
      mov       RAX,R8
@@ -792,7 +806,8 @@ Now we scan the cache access times a second time and take all values below the t
      ret
 @
 
-Now we put all together to get the program \verb|cachereadbyte2| that we can execute.
+Now we put all together to get the program \verb|cachereadbyte2|\index{cachereadbyte2 (program)}
+\marginnote{cachereadbyte2} that we can execute.
 
 <<cachereadbyte2.asm>>=
 <<preamble>>
@@ -917,6 +932,9 @@ Now we print out our result.
      call      _nprint
 <<exitProgram>>
 @
+
+Now we can put everything together to get our program \verb|cachreadbyte3.asm|\index{cachreadbyte3 (program)}
+\marginnote{cachreadbyte3}.
 
 <<cachereadbyte3.asm>>=
 <<preamble>>
@@ -1351,7 +1369,8 @@ Now we will print some statistics and then leave the program.
 <<exitProgram>>
 @
 
-Now we can put all together and create the program \verb|cacheread.asm|.
+Now we can put all together and create the program \verb|cacheread.asm|\index{cacheread (program)}
+\marginnote{cacheread}.
 
 <<cacheread.asm>>=
 <<preamble>>
@@ -1405,17 +1424,21 @@ sys	0m0.032s
 $ 
 \end{verbatim}
 
-\chapter{Signals}
+\chapter{Meltdown}
 
-\section{Basics}
+\section{Introduction}
+
+\section{Signals}
+
+\subsection{Basics}
 
 TBD
 
-\section{Detecting Signals}
+\subsection{Detecting Signals}
 
 TBD
 
-\section{Handling Signals}
+\subsection{Handling Signals}
 
 TBD
 
@@ -1798,6 +1821,8 @@ Now we store the character into the storage area.
 @
 
 \appendix
+
+\printindex
 
 \printglossary
 
