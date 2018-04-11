@@ -933,8 +933,8 @@ Now we print out our result.
 <<exitProgram>>
 @
 
-Now we can put everything together to get our program \verb|cachreadbyte3.asm|\index{cachreadbyte3 (program)}
-\marginnote{cachreadbyte3}.
+Now we can put everything together to get our program \verb|cachereadbyte3.asm|\index{cachereadbyte3 (program)}
+\marginnote{cachereadbyte3}.
 
 <<cachereadbyte3.asm>>=
 <<preamble>>
@@ -1427,6 +1427,8 @@ $
 \chapter{Meltdown}
 
 \section{Introduction}
+
+
 
 \section{Signals}
 
