@@ -51,7 +51,12 @@
 
 \newglossaryentry{x86}{
     name=x86,
-    description={x86 denotes a microprocessor architecture based on the 8086/8088}
+    description={a microprocessor architecture based on the 8086/8088}
+}
+
+\newglossaryentry{kpti}{
+    name=KPTI,
+    description={Kernel Page Table Isolation, a mitigation against Meltdown}
 }
 
 \newglossaryentry{rdtsc}{
@@ -142,7 +147,13 @@ bits 64
      pagesize       equ 1 << pspower
 @ %def _start pagesize pspower
 
+\section{Speculative Execution}
+\label{sec:Speculative Execution}
+
+All 3 attacks (Spectre-V1, Spectre-V2 and Meltdown) base on speculative execution and cache timing.
+
 \chapter{Cache Access Timing}
+\label{ch:Cache Access Timing}
 
 \section{Introduction}
 
@@ -971,6 +982,7 @@ Even if this program is not perfect because it is not reliable all the time it i
 next steps.
 
 \section{Read Array via Cache Access Time}
+\label{sec:Read Array via Cache Access Time}
 
 \subsection{Introduction}
 
@@ -1428,13 +1440,24 @@ $
 
 \section{Introduction}
 
+The Meltdown attack is a combination of a cache timing attack (see chapter \ref{ch:Cache Access Timing}) and speculative
+execution (see section \ref{sec:Speculative Execution}).
 
+For Meltdown we try to read memory which is normally not accessible to us because of the rights. Before \gls{kpti} was
+implemented in the linux kernel all kernel memory was mapped into every user process but protected against access.
+Meltdown now reads the memory by trying to access it. This leads to an exception in the processor because we are not
+authorized to access this memory.
+
+Because the processor speculatively executes instructions the instructions after the violation are executed before the
+exception is signaled. So we load something from a probe array depending on the read kernel memory and determine the
+cache access times afterwards to determine the original value (as seen in section
+\ref{sec:Read Array via Cache Access Time}).
+
+This only works if the signaling of the exception takes longer than the access to the probe array.
+
+Exceptions in linux are signaled by signals therefore we first look at signals and how we can handle them in assembly.
 
 \section{Signals}
-
-\subsection{Basics}
-
-TBD
 
 \subsection{Detecting Signals}
 
