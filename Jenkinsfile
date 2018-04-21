@@ -49,6 +49,7 @@ pipeline {
             git config push.default simple
             cd checkout
             git checkout gh-pages
+            mkdir -p asm/
             cp ../*.pdf .
             cp ../asm/*.asm asm/
             git diff --quiet && git diff --staged --quiet || git commit -am 'Update program code and documentation'
